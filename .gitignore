@@ -1,0 +1,23 @@
+# Java / Gradle build output
+**/build/
+**/bin/
+**/.gradle/
+
+# Frontend dependencies and local environment
+**/node_modules/
+vue-frontend/.env
+vue-frontend/dist/
+
+# IDE / operating system files
+.DS_Store
+.idea/
+.vscode/
+
+# Local Docker image archives (too large for GitHub)
+infra-images.tar
+msa-lecture-images.tar.gz
+msa-lecture-images.part.*
+
+# Temporary extracted lecture material
+tmp/
+settings-google.xml
