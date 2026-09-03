@@ -17,7 +17,7 @@ class EventResponse(BaseModel):
     description: Optional[str] = None
     category: EventCategory
     price: Decimal
-    instructorId: int
+    organizerId: int
     reservationCount: int
     status: str
     createdAt: Optional[datetime] = None
