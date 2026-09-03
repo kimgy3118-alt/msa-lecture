@@ -53,7 +53,7 @@ docker compose -f docker-compose.build.yml ps
 
 `event-platform-eureka`, `event-platform-auth`, `event-db`, `event-platform-kafka` 등이 `running` 또는 `healthy`가 되면 정상입니다. 최초 실행은 이미지 빌드와 서비스 등록 때문에 몇 분 걸릴 수 있습니다.
 
-### 2. 프런트엔드 실행
+### 2. 프론트엔드 실행
 
 새 터미널을 열어 아래를 실행합니다.
 
