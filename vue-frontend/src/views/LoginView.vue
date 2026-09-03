@@ -1,220 +1,29 @@
 <template>
-  <div class="login-page">
-    <div class="login-layout">
-      <!-- 좌측 브랜딩 -->
-      <div class="login-left">
-        <div class="brand">
-          <img src="@/assets/images/logo/main_logo.png" alt="LearnNexus" class="brand-logo" />
-          <span class="brand-name">LearnNexus</span>
-        </div>
-        <div class="brand-content">
-          <h2>다시 만나서<br>반갑습니다</h2>
-          <p>로그인하고 나만의 학습 여정을 이어가세요.</p>
-          <ul class="feature-list">
-            <li v-for="f in features" :key="f">
-              <span class="dot"></span>{{ f }}
-            </li>
-          </ul>
-        </div>
-      </div>
-
-      <!-- 우측 -->
-      <div class="login-right">
-        <div class="login-box fade-in-up">
-          <router-link to="/" class="back-link">← 홈으로</router-link>
-
-          <!-- 로그인 영역 -->
-          <div v-if="!showRegister" class="section">
-            <h3 class="section-title">로그인</h3>
-            <p class="section-desc">LearnNexus 계정으로 로그인합니다.</p>
-            <button class="btn btn-primary btn-full" @click="handleOAuth">로그인</button>
-            <div class="switch-link">
-              계정이 없으신가요?
-              <button class="text-btn" @click="showRegister = true">회원가입</button>
-            </div>
-          </div>
-
-          <!-- 회원가입 영역 -->
-          <div v-else class="section">
-            <h3 class="section-title">회원가입</h3>
-            <form @submit.prevent="handleRegister" class="form">
-              <div class="form-group">
-                <label class="form-label">이름</label>
-                <input v-model="registerForm.name" type="text" class="form-input" placeholder="홍길동" required />
-              </div>
-              <div class="form-group">
-                <label class="form-label">이메일</label>
-                <input v-model="registerForm.email" type="email" class="form-input" placeholder="user@example.com" required />
-              </div>
-              <div class="form-group">
-                <label class="form-label">비밀번호</label>
-                <input v-model="registerForm.password" type="password" class="form-input" placeholder="8자 이상" required />
-              </div>
-              <div class="form-group">
-                <label class="form-label">역할</label>
-                <select v-model="registerForm.role" class="form-input">
-                  <option value="STUDENT">학생</option>
-                  <option value="INSTRUCTOR">강사</option>
-                </select>
-              </div>
-              <div v-if="error" class="error-msg">{{ error }}</div>
-              <div v-if="success" class="success-msg">{{ success }}</div>
-              <button type="submit" class="btn btn-primary btn-full" :disabled="loading">
-                <span v-if="loading">가입 중...</span>
-                <span v-else>회원가입</span>
-              </button>
-            </form>
-            <div class="switch-link">
-              이미 계정이 있으신가요?
-              <button class="text-btn" @click="showRegister = false">로그인</button>
-            </div>
-          </div>
-
-        </div>
-      </div>
-    </div>
-  </div>
+  <main class="login-page">
+    <div class="login-visual" aria-hidden="true"></div>
+    <header class="login-header"><router-link to="/" class="brand"><img src="@/assets/images/logo/logo.png" alt="갈래" /></router-link><router-link to="/" class="home-link">홈으로</router-link></header>
+    <section class="login-card">
+      <template v-if="!showRegister">
+        <h1>가고 싶은 행사를<br>한곳에서 만나보세요.</h1><p class="intro">전국의 축제, 전시, 공연과 문화 체험을 갈래에서 찾아보세요.</p>
+        <form class="form" @submit.prevent="handleOAuth"><label>이메일<input v-model.trim="loginForm.username" type="email" required placeholder="name@example.com" /></label><label>비밀번호<input v-model="loginForm.password" type="password" required placeholder="비밀번호" /></label><p v-if="loginError" class="message error">{{ loginError }}</p><button class="oauth-button" :disabled="loginLoading">{{ loginLoading ? '로그인 중…' : '로그인' }} <span>→</span></button></form><p class="notice">데모 계정: owner@test.com / password1234</p><div class="switch">처음이신가요? <button @click="showRegister = true">회원가입</button></div>
+      </template>
+      <template v-else>
+        <button class="back-button" @click="showRegister = false">← 로그인으로</button><h1>갈래 회원가입</h1><p class="intro">행사를 예약하거나 기관 행사를 등록할 수 있어요.</p>
+        <form @submit.prevent="handleRegister" class="form"><label>이름<input v-model.trim="registerForm.name" required placeholder="홍길동" /></label><label>이메일<input v-model.trim="registerForm.email" required type="email" placeholder="name@example.com" /></label><label>비밀번호<input v-model="registerForm.password" required type="password" minlength="8" placeholder="8자 이상" /></label><label>이용 목적<select v-model="registerForm.role"><option value="STANDARD">행사 참여</option><option value="ADMIN">기관 행사 운영</option></select></label><p v-if="error" class="message error">{{ error }}</p><p v-if="success" class="message success">{{ success }}</p><button class="oauth-button" :disabled="loading">{{ loading ? '가입 처리 중…' : '회원가입하기' }}</button></form>
+      </template>
+    </section>
+  </main>
 </template>
-
 <script setup>
 import { ref } from 'vue'
 import { useAuthStore } from '@/store/auth.js'
 import { authApi } from '@/api/auth.js'
-
-const auth = useAuthStore()
-
-const showRegister = ref(false)
-const loading = ref(false)
-const error = ref('')
-const success = ref('')
-
-const registerForm = ref({ name: '', email: '', password: '', role: 'STUDENT' })
-
-const features = ['수강 중인 강의 이어보기', '맞춤 강의 추천', '수료증 관리']
-
-function handleOAuth() {
-  auth.redirectToLogin()
-}
-
-async function handleRegister() {
-  error.value = ''
-  success.value = ''
-  loading.value = true
-  try {
-    await authApi.register(registerForm.value)
-    success.value = '회원가입 완료! 로그인 페이지로 이동합니다.'
-    registerForm.value = { name: '', email: '', password: '', role: 'STUDENT' }
-    setTimeout(() => {
-      showRegister.value = false
-      success.value = ''
-    }, 2000)
-  } catch (e) {
-    error.value = e.response?.data?.message || '회원가입에 실패했습니다.'
-  } finally {
-    loading.value = false
-  }
-}
+const auth = useAuthStore(); const showRegister = ref(false), loading = ref(false), error = ref(''), success = ref(''), loginLoading = ref(false), loginError = ref('')
+const registerForm = ref({ name: '', email: '', password: '', role: 'STANDARD' })
+const loginForm = ref({ username: '', password: '' })
+async function handleOAuth() { const params=new URLSearchParams({response_type:'code',client_id:import.meta.env.VITE_CLIENT_ID,redirect_uri:import.meta.env.VITE_REDIRECT_URI,scope:'openid profile read write'}); loginError.value=''; loginLoading.value=true; try { await fetch(`/oauth2/authorize?${params}`,{credentials:'include',redirect:'manual'}); const response=await fetch('/auth/login',{method:'POST',credentials:'include',redirect:'manual',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams(loginForm.value)}); if (!response.ok && response.type !== 'opaqueredirect') throw new Error('로그인 정보를 확인해 주세요.'); window.location.assign(`/oauth2/authorize?${params}`) } catch(e) { loginError.value=e.message || '로그인에 실패했습니다.' } finally { loginLoading.value=false } }
+async function handleRegister() { error.value=''; success.value=''; loading.value=true; try { await authApi.register(registerForm.value); success.value='가입이 완료되었습니다. 로그인 버튼을 눌러 계속해 주세요.'; registerForm.value={name:'',email:'',password:'',role:'STANDARD'} } catch(e) { error.value=e.response?.data?.message || '회원가입에 실패했습니다.' } finally { loading.value=false } }
 </script>
-
 <style scoped>
-.login-page {
-  min-height: 100vh;
-  display: flex;
-  align-items: stretch;
-}
-.login-layout {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  width: 100%;
-  min-height: 100vh;
-}
-.login-left {
-  background: linear-gradient(160deg, #1a4f8a 0%, #185FA5 50%, #1e7bc4 100%);
-  padding: 48px;
-  display: flex;
-  flex-direction: column;
-  gap: 48px;
-}
-.brand { display: flex; align-items: center; gap: 10px; }
-.brand-logo { width: 40px; height: 40px; border-radius: 10px; object-fit: contain; }
-.brand-name { font-size: 18px; font-weight: 700; color: #fff; }
-.brand-content h2 {
-  font-size: 32px; font-weight: 700; color: #fff;
-  line-height: 1.35; margin-bottom: 14px;
-}
-.brand-content p { font-size: 15px; color: rgba(255,255,255,0.75); margin-bottom: 28px; }
-.feature-list { list-style: none; display: flex; flex-direction: column; gap: 12px; }
-.feature-list li { display: flex; align-items: center; gap: 10px; font-size: 14px; color: rgba(255,255,255,0.85); }
-.dot { width: 7px; height: 7px; border-radius: 50%; background: rgba(255,255,255,0.6); flex-shrink: 0; }
-
-.login-right {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 48px;
-  background: var(--color-bg-primary);
-}
-.login-box { width: 100%; max-width: 400px; }
-.back-link {
-  display: inline-block;
-  font-size: 13px;
-  color: var(--color-text-secondary);
-  margin-bottom: 32px;
-  transition: var(--transition);
-}
-.back-link:hover { color: var(--color-primary); }
-
-.section { display: flex; flex-direction: column; gap: 16px; }
-.section-title { font-size: 22px; font-weight: 700; color: var(--color-text-primary); margin-bottom: 4px; }
-.section-desc { font-size: 14px; color: var(--color-text-secondary); margin-bottom: 4px; }
-
-.form { display: flex; flex-direction: column; gap: 14px; }
-.form-group { display: flex; flex-direction: column; gap: 6px; }
-.form-label { font-size: 13px; font-weight: 500; color: var(--color-text-secondary); }
-.form-input {
-  padding: 10px 14px;
-  border: 1.5px solid var(--color-border);
-  border-radius: var(--radius-md);
-  font-size: 14px;
-  font-family: var(--font-sans);
-  color: var(--color-text-primary);
-  background: var(--color-bg-primary);
-  transition: var(--transition);
-  outline: none;
-}
-.form-input:focus { border-color: var(--color-primary); box-shadow: 0 0 0 3px var(--color-primary-light); }
-.btn-full { width: 100%; padding: 12px; font-size: 15px; justify-content: center; margin-top: 4px; }
-
-.switch-link {
-  text-align: center;
-  font-size: 13px;
-  color: var(--color-text-secondary);
-  margin-top: 4px;
-}
-.text-btn {
-  background: none;
-  border: none;
-  color: var(--color-primary);
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  padding: 0 2px;
-  text-decoration: underline;
-}
-.error-msg {
-  padding: 10px 14px;
-  background: #fef2f2;
-  border: 1px solid #fecaca;
-  border-radius: var(--radius-md);
-  font-size: 13px;
-  color: #dc2626;
-}
-.success-msg {
-  padding: 10px 14px;
-  background: #f0fdf4;
-  border: 1px solid #bbf7d0;
-  border-radius: var(--radius-md);
-  font-size: 13px;
-  color: #16a34a;
-}
+.login-page{min-height:100vh;position:relative;display:grid;place-items:center;padding:96px 24px 40px;background:#f5f8fd;overflow:hidden}.login-visual{position:absolute;inset:0;background:linear-gradient(90deg,rgba(10,22,30,.58),rgba(10,22,30,.08)),url('@/assets/images/hero/korea-festival-hero.png') center/cover;filter:saturate(.9)}.login-header{position:absolute;z-index:1;top:0;left:0;right:0;height:76px;padding:0 max(28px,calc((100% - 1180px)/2));display:flex;align-items:center;justify-content:space-between;color:#fff}.brand{display:flex;align-items:center;text-decoration:none}.brand img{height:20px;width:auto;filter:brightness(0) invert(1)}.home-link{color:#fff;text-decoration:none;padding:10px 18px;border:1px solid rgba(255,255,255,.55);border-radius:999px;font-size:14px}.login-card{position:relative;z-index:1;width:min(100%,460px);background:rgba(255,255,255,.96);border-radius:30px;padding:42px;box-shadow:0 24px 70px rgba(0,0,0,.22)}.eyebrow{font-size:11px;font-weight:800;letter-spacing:.14em;color:#0322ab;margin:0 0 14px}.login-card h1{margin:0;font-size:34px;line-height:1.25;letter-spacing:-1.5px;color:#1c292b}.intro{margin:16px 0 28px;line-height:1.7;color:#697274;font-size:14px}.oauth-button{width:100%;border:0;border-radius:14px;background:#0322ab;color:#fff;padding:16px 20px;font-weight:700;font-size:15px;cursor:pointer;display:flex;justify-content:space-between;align-items:center}.oauth-button:disabled{opacity:.6}.oauth-button span{font-size:22px;line-height:12px}.notice{font-size:12px;color:#8c9290;margin:15px 0 22px;line-height:1.5}.switch{text-align:center;color:#697274;font-size:13px}.switch button,.back-button{border:0;background:none;color:#0322ab;font-weight:700;cursor:pointer;font-size:13px}.back-button{margin:0 0 22px;padding:0}.form{display:grid;gap:14px}.form label{font-size:12px;font-weight:700;color:#485153;display:grid;gap:7px}.form input,.form select{font:inherit;border:1px solid #d9ded8;border-radius:12px;padding:12px;background:#fff;outline:none}.form input:focus,.form select:focus{border-color:#0322ab;box-shadow:0 0 0 3px #e8f0fb}.message{padding:11px 13px;border-radius:12px;font-size:13px;margin:0}.error{color:#a13030;background:#fcebea}.success{color:#276447;background:#e9f6ed}@media(max-width:600px){.login-card{padding:32px 25px;border-radius:24px}.login-card h1{font-size:29px}.login-header{padding:0 22px}}
 </style>

@@ -2,6 +2,15 @@ import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import { resolve } from 'path'
 
+const keepFrontendOrigin = (proxy) => {
+  proxy.on('proxyRes', (proxyRes) => {
+    const location = proxyRes.headers.location
+    if (location?.startsWith('http://localhost:8080')) {
+      proxyRes.headers.location = location.replace('http://localhost:8080', 'http://localhost:3000')
+    }
+  })
+}
+
 export default defineConfig({
   plugins: [vue()],
   resolve: {
@@ -22,12 +31,15 @@ export default defineConfig({
       '/oauth2': {
         target: 'http://localhost:8080',
         changeOrigin: true,
-        secure: false
+        secure: false,
+        configure: keepFrontendOrigin
       },
-      '/login': {
+      '/auth/login': {
         target: 'http://localhost:8080',
         changeOrigin: true,
-        secure: false
+        secure: false,
+        configure: keepFrontendOrigin,
+        rewrite: (path) => path.replace('/auth/login', '/login')
       },
       '/logout': {
         target: 'http://localhost:8080',

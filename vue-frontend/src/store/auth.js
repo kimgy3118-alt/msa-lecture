@@ -9,7 +9,7 @@ export const useAuthStore = defineStore('auth', () => {
   const user = ref(JSON.parse(sessionStorage.getItem('user') || 'null'))
 
   const isAuthenticated = computed(() => !!accessToken.value)
-  const isInstructor = computed(() => user.value?.role === 'INSTRUCTOR')
+  const isOrganizer = computed(() => user.value?.role === 'ADMIN')
 
   function setToken(token) {
     accessToken.value = token
@@ -17,6 +17,9 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   function setUser(userData) {
+    // 현재 제공된 인증 서버의 기존 역할을 갈래의 역할명으로 호환한다.
+    if (userData?.role === 'STUDENT') userData.role = 'STANDARD'
+    if (userData?.role === 'INSTRUCTOR') userData.role = 'ADMIN'
     user.value = userData
     sessionStorage.setItem('user', JSON.stringify(userData))
   }
@@ -73,14 +76,16 @@ export const useAuthStore = defineStore('auth', () => {
     }
 
     setToken(token)
-    await fetchUser()
+    const base64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')
+    const payload = JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(base64), char => char.charCodeAt(0))))
+    setUser({ id: payload.user_id ?? Number(payload.sub), email: payload.email, name: payload.name, role: payload.role })
   }
 
   return {
     accessToken,
     user,
     isAuthenticated,
-    isInstructor,
+    isOrganizer,
     setToken,
     setUser,
     fetchUser,

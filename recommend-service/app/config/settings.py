@@ -18,13 +18,13 @@ class Settings(BaseSettings):
     jwk_set_uri: str = "http://auth-server:9000/oauth2/jwks"
 
     # 서비스 URL
-    enrollment_service_url: str = "http://localhost:8083"
-    course_service_url: str = "http://localhost:8082"
+    reservation_service_url: str = "http://localhost:8083"
+    event_service_url: str = "http://localhost:8082"
 
     # Kafka
     kafka_bootstrap_servers: str = "localhost:9092"
     kafka_consumer_group_id: str = "recommend-service"
-    kafka_topic_enrollment_completed: str = "enrollment.completed"
+    kafka_topic_reservation_completed: str = "reservation.completed"
 
     class Config:
         env_file = ".env"

@@ -11,35 +11,36 @@ const routes = [
     path: '/login',
     name: 'Login',
     component: () => import('@/views/LoginView.vue'),
-    meta: { guestOnly: true }
+    meta: { guestOnly: true, bareLayout: true }
   },
   {
     path: '/callback',
     name: 'Callback',
-    component: () => import('@/views/CallbackView.vue')
+    component: () => import('@/views/CallbackView.vue'),
+    meta: { bareLayout: true }
   },
   {
-    path: '/courses',
-    name: 'CourseList',
-    component: () => import('@/views/CourseListView.vue'),
+    path: '/events',
+    name: 'EventList',
+    component: () => import('@/views/EventListView.vue'),
     meta: { requiresAuth: true }
   },
   {
-    path: '/courses/new',
-    name: 'CourseCreate',
-    component: () => import('@/views/CourseCreateView.vue'),
+    path: '/events/new',
+    name: 'EventCreate',
+    component: () => import('@/views/EventCreateView.vue'),
     meta: { requiresAuth: true, instructorOnly: true }
   },
   {
-    path: '/courses/:id(\\d+)',
-    name: 'CourseDetail',
-    component: () => import('@/views/CourseDetailView.vue'),
+    path: '/events/:id(\\d+)',
+    name: 'EventDetail',
+    component: () => import('@/views/EventDetailView.vue'),
     meta: { requiresAuth: true }
   },
   {
-    path: '/enrollments',
-    name: 'Enrollment',
-    component: () => import('@/views/EnrollmentView.vue'),
+    path: '/reservations',
+    name: 'Reservation',
+    component: () => import('@/views/ReservationView.vue'),
     meta: { requiresAuth: true }
   },
   {
@@ -67,11 +68,11 @@ router.beforeEach((to) => {
   }
 
   if (to.meta.guestOnly && auth.isAuthenticated) {
-    return { name: 'CourseList' }
+    return { name: 'EventList' }
   }
 
-  if (to.meta.instructorOnly && auth.user?.role !== 'INSTRUCTOR') {
-    return { name: 'CourseList' }
+  if (to.meta.instructorOnly && auth.user?.role !== 'ADMIN') {
+    return { name: 'EventList' }
   }
 })
 

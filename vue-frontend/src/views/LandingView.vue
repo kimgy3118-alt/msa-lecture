@@ -1,293 +1,525 @@
 <template>
-  <div class="landing">
-    <AppHeader />
-
-    <!-- 히어로 섹션 -->
+  <main class="landing">
     <section class="hero">
-      <div class="hero-inner">
-        <div class="hero-content fade-in-up">
-          <span class="hero-badge">MSA 기반 교육 플랫폼</span>
-          <h1 class="hero-title">배움을 더 스마트하게,<br>커리어를 더 빠르게</h1>
-          <p class="hero-desc">개발, 디자인, 비즈니스 분야의 전문가 강의를 수강하고 실력을 키워보세요.</p>
-          <div class="hero-actions">
-            <router-link to="/login" class="btn btn-primary btn-lg">무료로 시작하기</router-link>
-            <router-link to="/courses" class="btn btn-outline btn-lg">강의 둘러보기</router-link>
-          </div>
-          <div class="hero-stats">
-            <div class="stat"><span class="stat-num">1,200+</span><span class="stat-label">강의</span></div>
-            <div class="stat"><span class="stat-num">340+</span><span class="stat-label">강사</span></div>
-            <div class="stat"><span class="stat-num">28,000+</span><span class="stat-label">수강생</span></div>
-          </div>
+      <div class="hero-card">
+        <img class="hero-image" src="@/assets/images/hero/korea-festival-hero.png" alt="한국 문화 축제 풍경" />
+        <div class="hero-shade"></div>
+        <div class="hero-copy">
+          <span class="hero-badge">전국 행사 큐레이션</span>
+          <h1>어디로, 어떤 행사에<br />참여해 볼까요?</h1>
+          <p>전국 곳곳의 특별한 행사를 갈래에서 만나보세요.</p>
+          <router-link to="/events" class="hero-cta">행사 찾기 <span>→</span></router-link>
         </div>
-        <div class="hero-visual fade-in">
-          <img src="@/assets/images/logo/main_logo.png" alt="LearnNexus" class="hero-logo" />
-        </div>
+      </div>
+
+      <div class="search-panel">
+        <svg class="search-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>
+        <input placeholder="어디로, 어떤 행사를 찾고 있나요?" />
+        <router-link to="/events">검색</router-link>
       </div>
     </section>
 
-    <!-- 인기 강의 -->
-    <section class="popular-section">
-      <div class="section-inner">
-        <div class="section-header">
-          <h2 class="section-title">인기 강의</h2>
-          <router-link to="/login" class="section-link">전체 보기 →</router-link>
+    <section class="quick-wrap">
+      <div class="quick-grid">
+        <router-link v-for="item in quickLinks" :key="item.title" to="/events" class="quick">
+          <span class="quick-icon" v-html="item.icon"></span>
+          <b>{{ item.title }}</b>
+          <small>{{ item.sub }}</small>
+        </router-link>
+      </div>
+    </section>
+
+    <section class="content-section">
+      <div class="heading">
+        <div>
+          <p>CURATION</p>
+          <h2>갈래가 추천하는 특별한 행사</h2>
         </div>
-        <div class="course-grid">
-          <div v-for="course in featuredCourses" :key="course.id" class="course-card-landing">
-            <div class="card-thumb" :class="course.thumbBg">
-              <img :src="course.thumbSrc" :alt="course.title" class="thumb-img" />
+        <router-link to="/events">전체 보기 →</router-link>
+      </div>
+
+      <div class="card-carousel">
+        <button class="carousel-arrow prev" @click="scrollCards(-1)" aria-label="이전 카드">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6" /></svg>
+        </button>
+
+        <div class="card-track" ref="trackRef" @scroll="onTrackScroll">
+          <router-link
+            v-for="(event, i) in featuredEvents"
+            :key="event.title"
+            to="/events"
+            class="feature-card"
+            :class="event.tone"
+          >
+            <button class="heart-btn" :class="{ liked: likes[i] }" @click.prevent="toggleLike(i)" aria-label="찜하기">
+              <svg viewBox="0 0 24 24" width="16" height="16" :fill="likes[i] ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="2"><path d="M12 21s-7.5-4.6-10-9.3C.5 8 2 4.5 5.5 4c2-.3 3.8.6 6.5 3.4C14.7 4.6 16.5 3.7 18.5 4 22 4.5 23.5 8 22 11.7 19.5 16.4 12 21 12 21Z" /></svg>
+            </button>
+            <div class="feature-card-art">{{ event.icon }}</div>
+            <div class="feature-card-overlay">
+              <span class="feature-card-cat">{{ event.category }}</span>
+              <h3>{{ event.title }}</h3>
+              <p>⌖ {{ event.place }} · {{ event.price }}</p>
             </div>
-            <div class="card-body">
-              <span class="badge" :class="course.badgeClass">{{ course.category }}</span>
-              <h3 class="card-title">{{ course.title }}</h3>
-              <div class="card-meta">
-                <span class="instructor">{{ course.instructor }}</span>
-                <span class="price">{{ course.price }}</span>
-              </div>
-            </div>
-          </div>
+          </router-link>
         </div>
+
+        <button class="carousel-arrow next" @click="scrollCards(1)" aria-label="다음 카드">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6" /></svg>
+        </button>
+      </div>
+
+      <div class="carousel-dots">
+        <span v-for="(event, i) in featuredEvents" :key="i" :class="{ active: activeIndex === i }"></span>
       </div>
     </section>
 
-    <!-- 특징 섹션 -->
-    <section class="features-section">
-      <div class="section-inner">
-        <h2 class="section-title center">왜 LearnNexus인가요?</h2>
-        <div class="features-grid">
-          <div v-for="f in features" :key="f.title" class="feature-card">
-            <div class="feature-icon">{{ f.icon }}</div>
-            <h3 class="feature-title">{{ f.title }}</h3>
-            <p class="feature-desc">{{ f.desc }}</p>
-          </div>
-        </div>
+    <section class="region-section">
+      <div>
+        <p>REGION</p>
+        <h2>이번 주말, 어디로 갈래요?</h2>
+      </div>
+      <div class="region-list">
+        <router-link v-for="region in regions" :key="region" to="/events">{{ region }} <span>↗</span></router-link>
       </div>
     </section>
-
-    <!-- CTA -->
-    <section class="cta-section">
-      <div class="cta-inner">
-        <h2>지금 바로 시작하세요</h2>
-        <p>수천 명의 개발자들이 LearnNexus와 함께 성장하고 있습니다.</p>
-        <router-link to="/login" class="btn btn-primary btn-lg">무료로 시작하기</router-link>
-      </div>
-    </section>
-
-    <!-- 푸터 -->
-    <footer class="footer">
-      <div class="footer-inner">
-        <div class="footer-logo">
-          <img src="@/assets/images/logo/main_logo.png" alt="LearnNexus" />
-          <span>LearnNexus</span>
-        </div>
-        <p class="footer-copy">© 2026 LearnNexus. All rights reserved.</p>
-      </div>
-    </footer>
-  </div>
+  </main>
 </template>
 
 <script setup>
-import AppHeader from '@/components/AppHeader.vue'
+import { ref } from 'vue'
 
-import springImg   from '@/assets/images/courses/spring_boot.png'
-import vueImg      from '@/assets/images/courses/vue_js.png'
-import k8sImg      from '@/assets/images/courses/kubernetes.png'
-import dockerImg   from '@/assets/images/courses/docker.png'
-import pythonImg   from '@/assets/images/courses/python.png'
-import genaiImg    from '@/assets/images/courses/generative_ai.png'
+const trackRef = ref(null)
+const activeIndex = ref(0)
+const likes = ref({})
 
-const featuredCourses = [
-  { id:1, title:'Spring Boot MSA 완성', category:'백엔드',    instructor:'김강사', price:'₩89,000', thumbSrc: springImg, thumbBg:'thumb-teal',   badgeClass:'badge-teal'   },
-  { id:2, title:'Vue 3 실전 프로젝트',  category:'프론트엔드', instructor:'이강사', price:'₩69,000', thumbSrc: vueImg,    thumbBg:'thumb-teal',   badgeClass:'badge-teal'   },
-  { id:3, title:'Kubernetes 운영 가이드',category:'DevOps',   instructor:'박강사', price:'₩99,000', thumbSrc: k8sImg,    thumbBg:'thumb-blue',   badgeClass:'badge-blue'   },
-  { id:4, title:'Docker 컨테이너 실전', category:'DevOps',    instructor:'정강사', price:'₩79,000', thumbSrc: dockerImg, thumbBg:'thumb-blue',   badgeClass:'badge-blue'   },
-  { id:5, title:'Python 데이터 분석',   category:'데이터',    instructor:'최강사', price:'₩59,000', thumbSrc: pythonImg, thumbBg:'thumb-purple', badgeClass:'badge-purple' },
-  { id:6, title:'Generative AI 실전',   category:'AI',        instructor:'한강사', price:'₩75,000', thumbSrc: genaiImg,  thumbBg:'thumb-pink',   badgeClass:'badge-pink'   },
+function toggleLike(i) {
+  likes.value = { ...likes.value, [i]: !likes.value[i] }
+}
+
+function scrollCards(dir) {
+  const el = trackRef.value
+  if (!el) return
+  el.scrollBy({ left: dir * el.clientWidth * 0.7, behavior: 'smooth' })
+}
+
+function onTrackScroll() {
+  const el = trackRef.value
+  if (!el || !el.children.length) return
+  const cardWidth = el.children[0].offsetWidth + 18
+  activeIndex.value = Math.round(el.scrollLeft / cardWidth)
+}
+
+const quickLinks = [
+  {
+    icon: '<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20l4.5-4.5" /><path d="M14.5 3.5a2 2 0 0 1 2.83 0l3.17 3.17a2 2 0 0 1 0 2.83L10 20 4 21l1-6L14.5 3.5Z" /><path d="M13 5l6 6" /></svg>',
+    title: '축제', sub: '계절을 즐기는 여행'
+  },
+  {
+    icon: '<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="14" rx="2" /><circle cx="9" cy="10" r="2" /><path d="M21 15l-5-4-4 3.5-3-2L3 16" /></svg>',
+    title: '전시', sub: '새로운 영감 발견'
+  },
+  {
+    icon: '<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a3 3 0 0 1 3 3v6a3 3 0 0 1-6 0V6a3 3 0 0 1 3-3Z" /><path d="M6 11a6 6 0 0 0 12 0" /><line x1="12" y1="19" x2="12" y2="22" /></svg>',
+    title: '공연', sub: '가슴 뛰는 무대'
+  },
+  {
+    icon: '<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12a8 8 0 1 1 8 8" /><path d="M4 12l4 4m-4-4l4-4" /></svg>',
+    title: '문화 체험', sub: '직접 만드는 추억'
+  }
 ]
-
-const features = [
-  { icon:'🚀', title:'실무 중심 커리큘럼', desc:'현업 전문가가 직접 설계한 실무 중심 강의로 빠르게 성장하세요.' },
-  { icon:'🎯', title:'맞춤 강의 추천', desc:'AI 기반 추천 시스템이 수강 이력을 분석해 딱 맞는 강의를 추천합니다.' },
-  { icon:'💳', title:'간편한 수강 신청', desc:'원클릭 결제와 즉시 수강으로 학습을 바로 시작하세요.' },
-  { icon:'📱', title:'언제 어디서나', desc:'PC, 태블릿, 모바일 어디서든 끊김 없이 학습하세요.' },
+const featuredEvents = [
+  { title: '서울 세계 불꽃축제', category: 'FESTIVAL', region: 'SEOUL', place: '여의도 한강공원', price: '무료', icon: '🎆', tone: 'night' },
+  { title: '국립현대미술관 특별전', category: 'EXHIBITION', region: 'SEOUL', place: '국립현대미술관 서울', price: '₩5,000', icon: '🖼️', tone: 'pink' },
+  { title: '부산 바다 불빛 축제', category: 'FESTIVAL', region: 'BUSAN', place: '광안리 해수욕장', price: '무료', icon: '🌊', tone: 'blue' },
+  { title: '전주 한옥마을 전통 체험', category: 'CULTURE', region: 'JEONJU', place: '전주 한옥마을', price: '₩12,000', icon: '🏮', tone: 'gold' },
+  { title: '대구 국제 재즈 페스티벌', category: 'PERFORMANCE', region: 'DAEGU', place: '수성못 야외무대', price: '₩8,000', icon: '🎷', tone: 'purple' },
+  { title: '제주 감귤 마을 체험', category: 'CULTURE', region: 'JEJU', place: '서귀포 감귤 농원', price: '₩15,000', icon: '🍊', tone: 'orange' }
 ]
+const regions = ['서울', '부산', '강원', '전주', '경주', '제주']
 </script>
 
 <style scoped>
-.landing { background: var(--color-bg-secondary); }
+.landing {
+  color: var(--color-text-primary);
+  background: #fff;
+  font-family: var(--font-sans);
+}
 
 /* 히어로 */
 .hero {
-  background: linear-gradient(135deg, #f0f7ff 0%, #e8f4fd 50%, #f0f9ff 100%);
-  border-bottom: 1px solid var(--color-border);
-  padding: 80px 0 64px;
+  position: relative;
 }
-.hero-inner {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 24px;
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 48px;
-  align-items: center;
+.hero-card {
+  position: relative;
+  height: 520px;
+  overflow: hidden;
+  color: #fff;
+}
+.hero-image,
+.hero-shade {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.hero-image {
+  object-fit: cover;
+}
+.hero-shade {
+  background: linear-gradient(100deg, rgba(7, 26, 54, 0.86), rgba(16, 42, 86, 0.5) 55%, rgba(16, 42, 86, 0.12));
+}
+.hero-copy {
+  position: relative;
+  z-index: 1;
+  max-width: 560px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 0 max(24px, calc((100% - 1200px) / 2 + 24px));
 }
 .hero-badge {
-  display: inline-block;
-  padding: 5px 14px;
-  background: var(--color-primary-light);
-  color: var(--color-primary);
-  border-radius: 20px;
+  display: inline-flex;
+  width: fit-content;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.3);
   font-size: 12px;
-  font-weight: 600;
-  margin-bottom: 16px;
-}
-.hero-title {
-  font-size: 42px;
   font-weight: 700;
+  letter-spacing: 0.02em;
+  margin-bottom: 18px;
+}
+.hero-copy h1 {
+  font-size: 46px;
   line-height: 1.25;
-  letter-spacing: -0.5px;
-  color: var(--color-text-primary);
-  margin-bottom: 16px;
+  letter-spacing: -1.6px;
+  margin: 0 0 14px;
 }
-.hero-desc {
+.hero-copy > p {
   font-size: 16px;
-  color: var(--color-text-secondary);
-  line-height: 1.7;
-  max-width: 460px;
-  margin-bottom: 28px;
+  color: rgba(255, 255, 255, 0.86);
 }
-.hero-actions {
-  display: flex;
-  gap: 12px;
-  margin-bottom: 40px;
-}
-.btn-lg { padding: 12px 28px; font-size: 15px; }
-.hero-stats {
-  display: flex;
-  gap: 36px;
-}
-.stat { display: flex; flex-direction: column; gap: 2px; }
-.stat-num { font-size: 22px; font-weight: 700; color: var(--color-primary); }
-.stat-label { font-size: 12px; color: var(--color-text-secondary); }
-.hero-visual {
-  display: flex;
+.hero-cta {
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
-}
-.hero-logo {
-  width: 200px;
-  height: 200px;
-  object-fit: contain;
-  border-radius: 24px;
-  box-shadow: var(--shadow-lg);
-}
-
-/* 강의 섹션 */
-.popular-section { padding: 64px 0; }
-.section-inner { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
-.section-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 24px;
-}
-.section-title { font-size: 22px; font-weight: 700; color: var(--color-text-primary); }
-.section-title.center { text-align: center; margin-bottom: 40px; }
-.section-link { font-size: 14px; color: var(--color-primary); font-weight: 500; }
-.section-link:hover { text-decoration: underline; }
-
-.course-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
-}
-.course-card-landing {
-  background: var(--color-bg-primary);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  overflow: hidden;
+  gap: 14px;
+  margin-top: 26px;
+  color: #0322ab;
+  background: #fff;
+  font-weight: 700;
+  font-size: 14.5px;
+  padding: 14px 22px;
+  border-radius: 999px;
+  width: fit-content;
   transition: var(--transition);
 }
-.course-card-landing:hover {
-  transform: translateY(-3px);
+.hero-cta:hover {
+  transform: translateY(-1px);
   box-shadow: var(--shadow-md);
 }
-.card-thumb {
-  height: 110px;
+
+.search-panel {
+  position: relative;
+  z-index: 2;
+  max-width: 900px;
+  margin: -34px auto 0;
+  height: 74px;
+  background: #fff;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 0 12px 0 26px;
+  box-shadow: var(--shadow-lg);
+}
+.search-icon {
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+}
+.search-panel input {
+  border: 0;
+  outline: 0;
+  flex: 1;
+  font-size: 15.5px;
+  font-family: var(--font-sans);
+  color: var(--color-text-primary);
+  background: transparent;
+}
+.search-panel input::placeholder {
+  color: var(--color-text-muted);
+}
+.search-panel a {
+  background: var(--color-primary);
+  color: #fff;
+  padding: 14px 26px;
+  border-radius: 14px;
+  font-size: 14.5px;
+  font-weight: 600;
+  transition: var(--transition);
+}
+.search-panel a:hover {
+  background: var(--color-primary-dark);
+}
+
+/* 빠른 링크 */
+.quick-wrap {
+  max-width: 1100px;
+  margin: 74px auto 0;
+  padding: 0 24px;
+}
+.quick-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  border: 1px solid var(--color-border);
+  border-radius: 22px;
+  overflow: hidden;
+}
+.quick {
+  padding: 26px;
+  color: var(--color-text-primary);
+  border-right: 1px solid var(--color-border);
+  display: grid;
+  gap: 8px;
+  background: #fff;
+  transition: var(--transition);
+}
+.quick:hover {
+  background: var(--color-bg-secondary);
+}
+.quick:last-child {
+  border-right: 0;
+}
+.quick-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: transparent;
+  border: 1px solid var(--color-border);
+  color: var(--color-primary);
+  display: grid;
+  place-items: center;
+  margin-bottom: 4px;
+}
+.quick b {
+  font-size: 16.5px;
+}
+.quick small {
+  color: var(--color-text-secondary);
+}
+
+/* 공통 섹션 */
+.content-section,
+.region-section {
+  max-width: 1200px;
+  margin: 96px auto;
+  padding: 0 24px;
+}
+.heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  margin-bottom: 28px;
+}
+.heading p,
+.region-section p {
+  color: var(--color-primary);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  margin: 0;
+}
+.heading h2,
+.region-section h2 {
+  font-size: 30px;
+  letter-spacing: -1.4px;
+  margin: 7px 0 0;
+}
+.heading a {
+  color: var(--color-text-primary);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* 추천 행사 카드 캐러셀 */
+.card-carousel {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.card-track {
+  flex: 1;
+  display: flex;
+  gap: 18px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+  padding-bottom: 4px;
+  scrollbar-width: none;
+}
+.card-track::-webkit-scrollbar {
+  display: none;
+}
+.feature-card {
+  position: relative;
+  flex: 0 0 auto;
+  width: 260px;
+  height: 360px;
+  border-radius: 22px;
+  overflow: hidden;
+  scroll-snap-align: start;
+  color: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
-  overflow: hidden;
+  transition: var(--transition);
+  box-shadow: var(--shadow-md);
 }
-.thumb-teal   { background: #E1F5EE; }
-.thumb-blue   { background: #E6F1FB; }
-.thumb-purple { background: #EEEDFE; }
-.thumb-pink   { background: #FBEAF0; }
-.thumb-img { width: 100%; height: 100%; object-fit: contain; padding: 14px; }
-.card-body { padding: 14px 16px; display: flex; flex-direction: column; gap: 6px; }
-.card-title { font-size: 14px; font-weight: 600; color: var(--color-text-primary); line-height: 1.4; }
-.card-meta { display: flex; justify-content: space-between; align-items: center; }
-.instructor { font-size: 12px; color: var(--color-text-secondary); }
-.price { font-size: 14px; font-weight: 600; color: var(--color-primary); }
-
-/* 특징 */
-.features-section { padding: 64px 0; background: var(--color-bg-primary); }
-.features-grid {
+.feature-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+}
+.feature-card-art {
+  font-size: 72px;
+  opacity: 0.9;
+}
+.feature-card-overlay {
+  position: absolute;
+  inset: auto 0 0 0;
+  padding: 20px 18px;
+  background: linear-gradient(0deg, rgba(0, 0, 0, 0.72) 0%, rgba(0, 0, 0, 0.32) 60%, transparent 100%);
+}
+.feature-card-cat {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  opacity: 0.85;
+}
+.feature-card-overlay h3 {
+  font-size: 18px;
+  margin: 6px 0 4px;
+  letter-spacing: -0.4px;
+}
+.feature-card-overlay p {
+  font-size: 12.5px;
+  opacity: 0.85;
+}
+.heart-btn {
+  position: absolute;
+  z-index: 1;
+  top: 14px;
+  right: 14px;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.24);
+  backdrop-filter: blur(4px);
+  color: #fff;
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 20px;
-}
-.feature-card {
-  padding: 28px 24px;
-  background: var(--color-bg-secondary);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  text-align: center;
+  place-items: center;
   transition: var(--transition);
 }
-.feature-card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
-.feature-icon { font-size: 32px; margin-bottom: 12px; }
-.feature-title { font-size: 15px; font-weight: 600; margin-bottom: 8px; }
-.feature-desc { font-size: 13px; color: var(--color-text-secondary); line-height: 1.6; }
-
-/* CTA */
-.cta-section {
-  padding: 80px 0;
-  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
-  text-align: center;
-}
-.cta-inner { max-width: 600px; margin: 0 auto; padding: 0 24px; }
-.cta-inner h2 { font-size: 32px; font-weight: 700; color: #fff; margin-bottom: 12px; }
-.cta-inner p { font-size: 16px; color: rgba(255,255,255,0.8); margin-bottom: 32px; }
-.cta-inner .btn-primary {
+.heart-btn.liked {
   background: #fff;
-  color: var(--color-primary);
-  border-color: #fff;
-  font-weight: 600;
+  color: #e0355b;
 }
-.cta-inner .btn-primary:hover { background: #f0f7ff; }
+.night { background: linear-gradient(160deg, #1d274d, #0322ab); }
+.pink { background: linear-gradient(160deg, #c98fa0, #7a4a63); }
+.blue { background: linear-gradient(160deg, #4facd6, #14507e); }
+.gold { background: linear-gradient(160deg, #e8c675, #a9762f); }
+.purple { background: linear-gradient(160deg, #9c8fd6, #4a3a8f); }
+.orange { background: linear-gradient(160deg, #f5a35c, #c15a1f); }
 
-/* 푸터 */
-.footer {
-  background: var(--color-text-primary);
-  padding: 32px 0;
+.carousel-arrow {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid var(--color-border);
+  background: #fff;
+  color: var(--color-text-primary);
+  display: grid;
+  place-items: center;
+  transition: var(--transition);
 }
-.footer-inner {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 24px;
+.carousel-arrow:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+.carousel-dots {
   display: flex;
-  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 20px;
+}
+.carousel-dots span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-border-hover);
+  transition: var(--transition);
+}
+.carousel-dots span.active {
+  width: 18px;
+  border-radius: 3px;
+  background: var(--color-primary);
+}
+
+/* 지역 */
+.region-section {
+  background: var(--color-bg-secondary);
+  max-width: none;
+  padding: 64px calc((100% - 1152px) / 2);
+  display: flex;
   justify-content: space-between;
-}
-.footer-logo {
-  display: flex;
   align-items: center;
-  gap: 8px;
-  color: #fff;
-  font-size: 15px;
-  font-weight: 600;
+  border-radius: 0;
 }
-.footer-logo img { width: 28px; height: 28px; border-radius: 6px; }
-.footer-copy { font-size: 13px; color: rgba(255,255,255,0.5); }
+.region-list {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  max-width: 600px;
+}
+.region-list a {
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-border);
+  padding: 13px 18px;
+  background: #fff;
+  border-radius: 999px;
+  font-size: 14.5px;
+  font-weight: 600;
+  transition: var(--transition);
+}
+.region-list a:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+.region-list span {
+  color: var(--color-primary);
+  margin-left: 10px;
+}
+
+@media (max-width: 900px) {
+  .quick-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 760px) {
+  .hero-card { height: 460px; }
+  .hero-copy { padding: 0 28px; max-width: 100%; }
+  .hero-copy h1 { font-size: 34px; }
+  .search-panel { width: calc(100% - 48px); height: auto; flex-wrap: wrap; padding: 16px; border-radius: 18px; }
+  .search-panel input { min-width: 0; width: 100%; order: 1; padding: 10px 0; }
+  .search-panel a { order: 2; width: 100%; text-align: center; }
+  .quick-wrap { margin-top: 56px; }
+  .content-section, .region-section { margin: 64px auto; }
+  .region-section { padding: 48px 24px; display: block; }
+  .region-list { margin-top: 24px; }
+  .feature-card { width: 210px; height: 300px; }
+  .carousel-arrow { display: none; }
+}
 </style>

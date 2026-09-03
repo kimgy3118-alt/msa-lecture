@@ -1,52 +1,27 @@
 <template>
   <div class="page-wrapper">
-    <AppHeader />
-    <div class="page-layout">
-      <aside class="sidebar">
-        <div class="sidebar-section">
-          <div class="sidebar-label">메뉴</div>
-
-          <router-link to="/courses" class="sidebar-item">
-            <span class="si-icon">📚</span> 강의 목록
-          </router-link>
-
-          <router-link
-            v-if="!isInstructor"
-            to="/enrollments"
-            class="sidebar-item"
-          >
-            <span class="si-icon">✅</span> 내 수강 목록
-          </router-link>
-
-          <router-link to="/mypage" class="sidebar-item active">
-            <span class="si-icon">⭐</span> 마이페이지
-          </router-link>
-        </div>
-
-        <div class="sidebar-section">
-          <div class="sidebar-label">계정</div>
-          <button class="sidebar-item sidebar-btn" @click="handleLogout">
-            <span class="si-icon">🚪</span> 로그아웃
-          </button>
-        </div>
-      </aside>
+    <div class="page-shell">
+      <section class="page-heading">
+        <p>마이페이지</p>
+        <h1>{{ auth.user?.name || '사용자' }}님, 안녕하세요</h1>
+      </section>
 
       <main class="main-content">
         <!-- 프로필 카드 -->
         <div class="profile-card fade-in-up">
-          <div class="profile-avatar">{{ auth.user?.name?.charAt(0) || '?' }}</div>
+          <div class="profile-avatar"><img src="@/assets/images/profile/profile.png" alt="프로필 사진" /></div>
           <div class="profile-info">
             <h2 class="profile-name">{{ auth.user?.name || '사용자' }}</h2>
             <p class="profile-email">{{ auth.user?.email || '-' }}</p>
-            <span class="badge" :class="isInstructor ? 'badge-amber' : 'badge-blue'">
-              {{ isInstructor ? '강사' : '학생' }}
+            <span class="badge" :class="isOrganizer ? 'badge-amber' : 'badge-blue'">
+              {{ isOrganizer ? '기관 담당자' : '일반 사용자' }}
             </span>
           </div>
         </div>
 
-        <!-- 학생 화면 -->
-        <section v-if="!isInstructor" class="recommend-section">
-          <h3 class="section-title">추천 강의</h3>
+        <!-- 일반 사용자 화면 -->
+        <section v-if="!isOrganizer" class="recommend-section">
+          <h3 class="section-title">추천 행사</h3>
 
           <p v-if="recommendMessage" class="recommend-message">
             {{ recommendMessage }}
@@ -63,7 +38,7 @@
           </div>
 
           <div v-else-if="recommendations.length" class="recommend-grid fade-in">
-            <CourseCard v-for="c in recommendations" :key="c.id" :course="c" />
+            <EventCard v-for="c in recommendations" :key="c.id" :event="c" />
           </div>
 
           <p v-else-if="recommendError" class="empty-text">
@@ -71,25 +46,25 @@
           </p>
 
           <p v-else class="empty-text">
-            아직 추천할 강의가 없습니다.
+            아직 추천할 행사가 없습니다.
           </p>
         </section>
 
-        <!-- 강사 화면 -->
+        <!-- 기관 담당자 화면 -->
         <section v-else class="instructor-section">
           <div class="section-head">
-            <h3 class="section-title">내가 등록한 강좌</h3>
-            <span class="section-subtitle">등록한 강좌와 강좌별 수강생 수를 확인할 수 있습니다.</span>
+            <h3 class="section-title">내가 등록한 행사</h3>
+            <span class="section-subtitle">등록한 행사와 행사별 예약자 수를 확인할 수 있습니다.</span>
           </div>
 
           <div class="summary-cards">
             <div class="summary-card">
-              <div class="summary-label">등록 강좌 수</div>
-              <div class="summary-value">{{ myCourses.length }}</div>
+              <div class="summary-label">등록 행사 수</div>
+              <div class="summary-value">{{ myEvents.length }}</div>
             </div>
             <div class="summary-card">
-              <div class="summary-label">총 수강생 수</div>
-              <div class="summary-value">{{ totalEnrollmentCount }}</div>
+              <div class="summary-label">총 예약자 수</div>
+              <div class="summary-value">{{ totalReservationCount }}</div>
             </div>
           </div>
 
@@ -103,60 +78,60 @@
             </div>
           </div>
 
-          <div v-else-if="myCourses.length" class="instructor-course-list fade-in">
+          <div v-else-if="myEvents.length" class="instructor-event-list fade-in">
             <div
-              v-for="course in myCourses"
-              :key="course.id"
-              class="instructor-course-card"
+              v-for="event in myEvents"
+              :key="event.id"
+              class="instructor-event-card"
             >
-              <div class="course-card-top">
+              <div class="event-card-top">
                 <div>
-                  <h4 class="course-title">{{ course.title }}</h4>
-                  <p class="course-desc">{{ course.description || '설명이 없습니다.' }}</p>
+                  <h4 class="event-title">{{ event.title }}</h4>
+                  <p class="event-desc">{{ event.description || '설명이 없습니다.' }}</p>
                 </div>
                 <span
                   class="status-badge"
-                  :class="course.status === 'ACTIVE' ? 'status-active' : 'status-inactive'"
+                  :class="event.status === 'ACTIVE' ? 'status-active' : 'status-inactive'"
                 >
-                  {{ course.status || 'UNKNOWN' }}
+                  {{ event.status || 'UNKNOWN' }}
                 </span>
               </div>
 
-              <div class="course-meta-grid">
+              <div class="event-meta-grid">
                 <div class="meta-box">
                   <div class="meta-label">카테고리</div>
-                  <div class="meta-value">{{ course.category || '-' }}</div>
+                  <div class="meta-value">{{ event.category || '-' }}</div>
                 </div>
                 <div class="meta-box">
                   <div class="meta-label">가격</div>
-                  <div class="meta-value">{{ formatPrice(course.price) }}</div>
+                  <div class="meta-value">{{ formatPrice(event.price) }}</div>
                 </div>
                 <div class="meta-box">
-                  <div class="meta-label">수강생 수</div>
+                  <div class="meta-label">예약자 수</div>
                   <div class="meta-value">
-                    {{ course.enrollment_count ?? course.enrollmentCount ?? 0 }}명
+                    {{ event.reservation_count ?? event.reservationCount ?? 0 }}명
                   </div>
                 </div>
                 <div class="meta-box">
-                  <div class="meta-label">강좌 ID</div>
-                  <div class="meta-value">#{{ course.id }}</div>
+                  <div class="meta-label">행사 ID</div>
+                  <div class="meta-value">{{ event.id }}</div>
                 </div>
               </div>
 
-              <div class="course-card-actions">
-                <router-link :to="`/courses/${course.id}`" class="action-btn action-primary">
-                  강좌 보기
+              <div class="event-card-actions">
+                <router-link :to="`/events/${event.id}`" class="action-btn action-primary">
+                  행사 보기
                 </router-link>
               </div>
             </div>
           </div>
 
-          <p v-else-if="instructorError" class="empty-text">
-            {{ instructorError }}
+          <p v-else-if="organizerError" class="empty-text">
+            {{ organizerError }}
           </p>
 
           <p v-else class="empty-text">
-            아직 등록한 강좌가 없습니다.
+            아직 등록한 행사가 없습니다.
           </p>
         </section>
       </main>
@@ -166,40 +141,32 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-import AppHeader from '@/components/AppHeader.vue'
-import CourseCard from '@/components/CourseCard.vue'
+import EventCard from '@/components/EventCard.vue'
 import { useAuthStore } from '@/store/auth.js'
-import { enrollmentApi } from '@/api/enrollment.js'
-import { courseApi } from '@/api/course.js'
+import { reservationApi } from '@/api/reservation.js'
+import { eventApi } from '@/api/event.js'
 
-const router = useRouter()
 const auth = useAuthStore()
 
-const isInstructor = computed(() => auth.user?.role === 'INSTRUCTOR')
+const isOrganizer = computed(() => auth.user?.role === 'ADMIN')
 
-/* 학생용 */
+/* 일반 사용자용 */
 const recommendations = ref([])
 const recommendLoading = ref(true)
 const recommendError = ref('')
 const recommendMessage = ref('')
 
-/* 강사용 */
-const myCourses = ref([])
+/* 기관 담당자용 */
+const myEvents = ref([])
 const instructorLoading = ref(true)
-const instructorError = ref('')
+const organizerError = ref('')
 
-const totalEnrollmentCount = computed(() =>
-  myCourses.value.reduce((sum, course) => {
-    const count = Number(course.enrollment_count ?? course.enrollmentCount ?? 0)
+const totalReservationCount = computed(() =>
+  myEvents.value.reduce((sum, event) => {
+    const count = Number(event.reservation_count ?? event.reservationCount ?? 0)
     return sum + (Number.isNaN(count) ? 0 : count)
   }, 0)
 )
-
-function handleLogout() {
-  auth.logout()
-  router.push('/')
-}
 
 function formatPrice(price) {
   const value = Number(price ?? 0)
@@ -208,15 +175,15 @@ function formatPrice(price) {
 }
 
 /**
- * course 객체에서 강사 식별자 추출
+ * event 객체에서 기관 담당자 식별자 추출
  */
-function getCourseInstructorId(course) {
+function getEventOrganizerId(event) {
   return (
-    course.instructorId ??
-    course.instructor_id ??
-    course.instructor ??
-    course.teacherId ??
-    course.teacher_id ??
+    event.organizerId ??
+    event.organizer_id ??
+    event.instructor ??
+    event.teacherId ??
+    event.teacher_id ??
     null
   )
 }
@@ -225,23 +192,23 @@ async function loadStudentRecommendations() {
   try {
     if (!auth.user) {
       console.warn('[MyPage] auth.user is missing')
-      recommendError.value = '추천 강의를 준비 중입니다.'
+      recommendError.value = '추천 행사를 준비 중입니다.'
       return
     }
 
     if (!auth.user.id) {
       console.warn('[MyPage] auth.user.id is missing:', auth.user)
-      recommendError.value = '추천 강의를 준비 중입니다.'
+      recommendError.value = '추천 행사를 준비 중입니다.'
       return
     }
 
-    const res = await enrollmentApi.getRecommendations(auth.user.id)
+    const res = await reservationApi.getRecommendations(auth.user.id)
     console.log('[MyPage] recommendation response:', res.data)
 
     const payload = res.data
 
-    if (Array.isArray(payload?.recommendedCourses)) {
-      recommendations.value = payload.recommendedCourses
+    if (Array.isArray(payload?.recommendedEvents)) {
+      recommendations.value = payload.recommendedEvents
       recommendMessage.value = payload.message ?? ''
     } else if (Array.isArray(payload?.data)) {
       recommendations.value = payload.data
@@ -256,75 +223,75 @@ async function loadStudentRecommendations() {
     }
   } catch (error) {
     console.error('[MyPage] failed to load recommendations:', error)
-    recommendError.value = '현재 추천 강의를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.'
+    recommendError.value = '현재 추천 행사를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.'
   } finally {
     recommendLoading.value = false
   }
 }
 
-async function loadInstructorCourses() {
+async function loadOrganizerEvents() {
   try {
     if (!auth.user) {
       console.warn('[MyPage] instructor auth.user is missing')
-      instructorError.value = '강좌 정보를 불러오지 못했습니다.'
+      organizerError.value = '행사 정보를 불러오지 못했습니다.'
       return
     }
 
     if (!auth.user.id) {
       console.warn('[MyPage] instructor auth.user.id is missing:', auth.user)
-      instructorError.value = '강좌 정보를 불러오지 못했습니다.'
+      organizerError.value = '행사 정보를 불러오지 못했습니다.'
       return
     }
 
-    const res = await courseApi.getCourses()
-    console.log('[MyPage] course list response:', res.data)
+    const res = await eventApi.getEvents()
+    console.log('[MyPage] event list response:', res.data)
 
-    let courses = []
+    let events = []
 
     if (Array.isArray(res.data?.data)) {
-      courses = res.data.data
+      events = res.data.data
     } else if (Array.isArray(res.data)) {
-      courses = res.data
+      events = res.data
     } else {
-      console.warn('[MyPage] unexpected course response shape:', res.data)
+      console.warn('[MyPage] unexpected event response shape:', res.data)
     }
 
     console.log('[MyPage] auth.user =', auth.user)
-    console.log('[MyPage] courses =', courses)
-    console.log('[MyPage] first course =', courses[0])
+    console.log('[MyPage] events =', events)
+    console.log('[MyPage] first event =', events[0])
 
-    courses.forEach(course => {
+    events.forEach(event => {
       console.log('[MyPage] instructor fields check:', {
-        courseId: course.id,
-        instructorId: course.instructorId,
-        instructor_id: course.instructor_id,
-        instructor: course.instructor,
-        teacherId: course.teacherId,
-        teacher_id: course.teacher_id,
-        rawCourse: course
+        eventId: event.id,
+        organizerId: event.organizerId,
+        organizer_id: event.organizer_id,
+        instructor: event.instructor,
+        teacherId: event.teacherId,
+        teacher_id: event.teacher_id,
+        rawEvent: event
       })
     })
 
-    const instructorId = Number(auth.user.id)
+    const organizerId = Number(auth.user.id)
 
-    myCourses.value = courses.filter(course => {
-      const courseInstructorId = Number(getCourseInstructorId(course))
-      return !Number.isNaN(courseInstructorId) && courseInstructorId === instructorId
+    myEvents.value = events.filter(event => {
+      const eventOrganizerId = Number(getEventOrganizerId(event))
+      return !Number.isNaN(eventOrganizerId) && eventOrganizerId === organizerId
     })
 
-    console.log('[MyPage] filtered myCourses =', myCourses.value)
+    console.log('[MyPage] filtered myEvents =', myEvents.value)
   } catch (error) {
-    console.error('[MyPage] failed to load instructor courses:', error)
-    instructorError.value = '현재 강좌 정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.'
+    console.error('[MyPage] failed to load instructor events:', error)
+    organizerError.value = '현재 행사 정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.'
   } finally {
     instructorLoading.value = false
   }
 }
 
 onMounted(async () => {
-  if (isInstructor.value) {
+  if (isOrganizer.value) {
     recommendLoading.value = false
-    await loadInstructorCourses()
+    await loadOrganizerEvents()
   } else {
     instructorLoading.value = false
     await loadStudentRecommendations()
@@ -335,78 +302,40 @@ onMounted(async () => {
 <style scoped>
 .page-wrapper {
   min-height: 100vh;
-  background: var(--color-bg-secondary);
+  background: #fff;
 }
 
-.page-layout {
+.page-shell {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 32px 24px;
-  display: grid;
-  grid-template-columns: 220px 1fr;
-  gap: 28px;
+  padding: 56px 24px 100px;
 }
 
-.sidebar {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+.page-heading {
+  padding-bottom: 32px;
+  margin-bottom: 36px;
+  border-bottom: 1px solid var(--color-border);
 }
 
-.sidebar-section {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  margin-bottom: 8px;
-}
-
-.sidebar-label {
-  font-size: 10px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--color-text-muted);
-  padding: 8px 12px 4px;
-}
-
-.sidebar-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 9px 12px;
-  border-radius: var(--radius-md);
-  font-size: 14px;
+.page-heading p {
+  margin: 0 0 10px;
   color: var(--color-text-secondary);
-  transition: var(--transition);
-  background: none;
-  border: none;
-  width: 100%;
-  text-align: left;
-  cursor: pointer;
-  font-family: var(--font-sans);
-  text-decoration: none;
-}
-
-.sidebar-item:hover {
-  background: var(--color-bg-tertiary);
-  color: var(--color-text-primary);
-}
-
-.sidebar-item.active {
-  background: var(--color-primary-light);
-  color: var(--color-primary);
-  font-weight: 500;
-}
-
-.si-icon {
   font-size: 15px;
+  font-weight: 600;
+}
+
+.page-heading h1 {
+  margin: 0;
+  font-size: 36px;
+  letter-spacing: -1.4px;
+  color: var(--color-text-primary);
 }
 
 .main-content {
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 32px;
+  gap: 40px;
 }
 
 .profile-card {
@@ -417,7 +346,6 @@ onMounted(async () => {
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
   padding: 28px;
-  box-shadow: var(--shadow-sm);
 }
 
 .profile-avatar {
@@ -425,13 +353,16 @@ onMounted(async () => {
   height: 64px;
   border-radius: 50%;
   background: var(--color-primary-light);
-  color: var(--color-primary);
-  font-size: 24px;
-  font-weight: 700;
+  overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+}
+.profile-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .profile-info {
@@ -554,7 +485,6 @@ onMounted(async () => {
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
   padding: 18px 20px;
-  box-shadow: var(--shadow-sm);
 }
 
 .summary-label {
@@ -569,20 +499,19 @@ onMounted(async () => {
   color: var(--color-text-primary);
 }
 
-.instructor-course-list {
+.instructor-event-list {
   display: grid;
   gap: 18px;
 }
 
-.instructor-course-card {
+.instructor-event-card {
   background: var(--color-bg-primary);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
   padding: 22px;
-  box-shadow: var(--shadow-sm);
 }
 
-.course-card-top {
+.event-card-top {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -590,13 +519,13 @@ onMounted(async () => {
   margin-bottom: 18px;
 }
 
-.course-title {
+.event-title {
   font-size: 18px;
   font-weight: 700;
   margin-bottom: 8px;
 }
 
-.course-desc {
+.event-desc {
   font-size: 14px;
   color: var(--color-text-secondary);
   line-height: 1.5;
@@ -615,7 +544,7 @@ onMounted(async () => {
 
 .status-active {
   background: #eaf8ef;
-  color: #0f8a3b;
+  color: #174fbd;
 }
 
 .status-inactive {
@@ -623,7 +552,7 @@ onMounted(async () => {
   color: #6b7280;
 }
 
-.course-meta-grid {
+.event-meta-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 12px;
@@ -648,7 +577,7 @@ onMounted(async () => {
   color: var(--color-text-primary);
 }
 
-.course-card-actions {
+.event-card-actions {
   display: flex;
   justify-content: flex-end;
 }
@@ -686,13 +615,9 @@ onMounted(async () => {
 }
 
 @media (max-width: 992px) {
-  .page-layout {
-    grid-template-columns: 1fr;
-  }
-
   .recommend-grid,
   .loading-row,
-  .course-meta-grid {
+  .event-meta-grid {
     grid-template-columns: 1fr;
   }
 
@@ -702,12 +627,20 @@ onMounted(async () => {
 }
 
 @media (max-width: 640px) {
+  .page-shell {
+    padding: 40px 18px 70px;
+  }
+
+  .page-heading h1 {
+    font-size: 28px;
+  }
+
   .profile-card {
     flex-direction: column;
     align-items: flex-start;
   }
 
-  .course-card-top {
+  .event-card-top {
     flex-direction: column;
   }
 

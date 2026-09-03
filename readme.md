@@ -12,7 +12,7 @@ MariaDB / Kafka (인프라)
 # 공통 이미지 파일 로드 (API Gateway, Auth Server)
 docker load -i infra-images.tar
 
-# msa-lecture/auth-server:1.0 등 태그 확인
+# national-event-platform/auth-server:1.0 등 태그 확인
 docker images
 
 ## 프로젝트 루트에서 (초기 트러블슈팅/리빌드 고려, 캐시 없이 빌드, 컨테이너는 묶어서 백그라운드로 실행)
@@ -35,8 +35,8 @@ docker compose logs -f eureka-server
 docker compose logs -f auth-server
 docker compose logs -f api-gateway
 docker compose logs -f user-service
-docker compose logs -f course-service
-docker compose logs -f enrollment-service
+docker compose logs -f event-service
+docker compose logs -f reservation-service
 docker compose logs -f payment-service
 docker compose logs -f recommend-service
 

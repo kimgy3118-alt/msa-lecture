@@ -5,7 +5,7 @@ from decimal import Decimal
 from datetime import datetime
 
 
-class CourseCategory(str, Enum):
+class EventCategory(str, Enum):
     BACKEND = "BACKEND"
     FRONTEND = "FRONTEND"
     DEVOPS = "DEVOPS"
@@ -16,27 +16,27 @@ class CourseCategory(str, Enum):
     OTHER = "OTHER"
 
 
-class CourseResponse(BaseModel):
+class EventResponse(BaseModel):
     id: int
     title: str
     description: Optional[str] = None
-    category: CourseCategory
+    category: EventCategory
     price: Decimal
     instructorId: int
-    enrollmentCount: int
+    reservationCount: int
     status: str
     createdAt: Optional[datetime] = None
 
 
-class EnrollmentHistoryResponse(BaseModel):
+class ReservationHistoryResponse(BaseModel):
     userId: int
-    activeCourseIds: List[int]
+    activeEventIds: List[int]
 
 
 class RecommendResponse(BaseModel):
     userId: int
-    recommendedCourses: List[CourseResponse]
-    basedOnCategory: Optional[CourseCategory] = None
+    recommendedEvents: List[EventResponse]
+    basedOnCategory: Optional[EventCategory] = None
     message: str
 
 

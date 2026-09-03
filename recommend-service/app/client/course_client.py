@@ -2,30 +2,30 @@ import httpx
 import logging
 from typing import List
 from app.config.settings import settings
-from app.model.schemas import CourseResponse, CourseCategory
+from app.model.schemas import EventResponse, EventCategory
 
 logger = logging.getLogger(__name__)
 
 
-class CourseServiceClient:
+class EventServiceClient:
     """
-    Course Service REST 클라이언트
-    - 카테고리별 미수강 강의 목록 조회
+    Event Service REST 클라이언트
+    - 카테고리별 미예약 행사 목록 조회
     """
 
     def __init__(self):
-        self.base_url = settings.course_service_url
+        self.base_url = settings.event_service_url
 
-    async def get_recommend_courses(
+    async def get_recommend_events(
         self,
-        category: CourseCategory,
+        category: EventCategory,
         exclude_ids: List[int]
-    ) -> List[CourseResponse]:
+    ) -> List[EventResponse]:
         """
-        GET /courses/internal/recommend
-        카테고리 기반 미수강 강의 목록 조회 (수강생 수 기준 정렬)
+        GET /events/internal/recommend
+        카테고리 기반 미예약 행사 목록 조회 (예약자 수 기준 정렬)
         """
-        url = f"{self.base_url}/api/courses/internal/recommend"
+        url = f"{self.base_url}/api/events/internal/recommend"
         params = {"category": category.value}
         if exclude_ids:
             params["excludeIds"] = ",".join(str(i) for i in exclude_ids)
@@ -34,27 +34,27 @@ class CourseServiceClient:
             async with httpx.AsyncClient(timeout=5.0) as client:
                 response = await client.get(url, params=params)
                 response.raise_for_status()
-                return [CourseResponse(**c) for c in response.json()]
+                return [EventResponse(**c) for c in response.json()]
         except httpx.HTTPError as e:
-            logger.error(f"[CourseClient] 추천 강의 조회 실패 - category: {category}, error: {e}")
+            logger.error(f"[EventClient] 추천 행사 조회 실패 - category: {category}, error: {e}")
             return []
 
-    async def get_all_courses(self) -> List[CourseResponse]:
+    async def get_all_events(self) -> List[EventResponse]:
         """
-        GET /courses - 전체 강의 목록 조회
-        수강 이력이 없는 신규 사용자 추천용
+        GET /events - 전체 행사 목록 조회
+        예약 이력이 없는 신규 사용자 추천용
         """
-        url = f"{self.base_url}/api/courses"
+        url = f"{self.base_url}/api/events"
         try:
             async with httpx.AsyncClient(timeout=5.0) as client:
                 response = await client.get(url)
                 response.raise_for_status()
                 data = response.json()
-                courses = data.get("data", [])
-                return [CourseResponse(**c) for c in courses]
+                events = data.get("data", [])
+                return [EventResponse(**c) for c in events]
         except httpx.HTTPError as e:
-            logger.error(f"[CourseClient] 전체 강의 조회 실패 - error: {e}")
+            logger.error(f"[EventClient] 전체 행사 조회 실패 - error: {e}")
             return []
 
 
-course_client = CourseServiceClient()
+event_client = EventServiceClient()

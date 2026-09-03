@@ -8,10 +8,10 @@ services:
 
   mariadb:
     image: mariadb:11.2
-    container_name: lecturedb
+    container_name: event-db
     environment:
       MYSQL_ROOT_PASSWORD: SqlDba-1
-      MYSQL_DATABASE: lecture_db
+      MYSQL_DATABASE: event_platform_db
       MYSQL_USER: manager
       MYSQL_PASSWORD: SqlDba-1
     ports:
@@ -26,11 +26,11 @@ services:
       retries: 5
       start_period: 30s
     networks:
-      - lecture-net
+      - event-platform-net
 
   kafka:
     image: confluentinc/cp-kafka:7.7.0
-    container_name: lecture-kafka
+    container_name: event-platform-kafka
     environment:
       KAFKA_NODE_ID: 1
       KAFKA_PROCESS_ROLES: broker,controller
@@ -55,7 +55,7 @@ services:
       retries: 5
       start_period: 60s
     networks:
-      - lecture-net
+      - event-platform-net
 
 
   # Service Discovery
@@ -64,7 +64,7 @@ services:
     build:
       context: ./eureka-server
       dockerfile: Dockerfile
-    container_name: lecture-eureka
+    container_name: event-platform-eureka
     ports:
       - "8761:8761"
     environment:
@@ -76,19 +76,19 @@ services:
       retries: 10
       start_period: 60s
     networks:
-      - lecture-net
+      - event-platform-net
   
 
   # Auth Server
 
   auth-server:
-    image: msa-lecture/auth-server:1.0
-    container_name: lecture-auth
+    image: national-event-platform/auth-server:1.0
+    container_name: event-platform-auth
     ports:
       - "9000:9000"
     environment:
       - SPRING_PROFILES_ACTIVE=docker
-      - SPRING_DATASOURCE_URL=jdbc:mariadb://lecturedb:3306/lecture_db
+      - SPRING_DATASOURCE_URL=jdbc:mariadb://event-db:3306/event_platform_db
       - SPRING_DATASOURCE_USERNAME=manager
       - SPRING_DATASOURCE_PASSWORD=SqlDba-1
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
@@ -104,14 +104,14 @@ services:
       retries: 10
       start_period: 120s
     networks:
-      - lecture-net
+      - event-platform-net
 
 
   # API Gateway
 
   api-gateway:
-    image: msa-lecture/api-gateway:1.0
-    container_name: lecture-gateway
+    image: national-event-platform/api-gateway:1.0
+    container_name: event-platform-gateway
     ports:
       - "8080:8080"
     environment:
@@ -125,7 +125,7 @@ services:
       auth-server:
         condition: service_healthy
     networks:
-      - lecture-net
+      - event-platform-net
 
 
   # Microservices
@@ -134,12 +134,12 @@ services:
     build:
       context: ./user-service
       dockerfile: Dockerfile
-    container_name: lecture-user
+    container_name: event-platform-user
     ports:
       - "8081:8081"
     environment:
       - SPRING_PROFILES_ACTIVE=docker
-      - SPRING_DATASOURCE_URL=jdbc:mariadb://lecturedb:3306/lecture_db
+      - SPRING_DATASOURCE_URL=jdbc:mariadb://event-db:3306/event_platform_db
       - SPRING_DATASOURCE_USERNAME=manager
       - SPRING_DATASOURCE_PASSWORD=SqlDba-1
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
@@ -153,18 +153,18 @@ services:
       auth-server:
         condition: service_healthy
     networks:
-      - lecture-net
+      - event-platform-net
 
-  course-service:
+  event-service:
     build:
-      context: ./course-service
+      context: ./event-service
       dockerfile: Dockerfile
-    container_name: lecture-course
+    container_name: event-platform-event
     ports:
       - "8082:8082"
     environment:
       - SPRING_PROFILES_ACTIVE=docker
-      - SPRING_DATASOURCE_URL=jdbc:mariadb://lecturedb:3306/lecture_db
+      - SPRING_DATASOURCE_URL=jdbc:mariadb://event-db:3306/event_platform_db
       - SPRING_DATASOURCE_USERNAME=manager
       - SPRING_DATASOURCE_PASSWORD=SqlDba-1
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
@@ -178,18 +178,18 @@ services:
       auth-server:
         condition: service_healthy
     networks:
-      - lecture-net
+      - event-platform-net
 
-  enrollment-service:
+  reservation-service:
     build:
-      context: ./enrollment-service
+      context: ./reservation-service
       dockerfile: Dockerfile
-    container_name: lecture-enrollment
+    container_name: event-platform-reservation
     ports:
       - "8083:8083"
     environment:
       - SPRING_PROFILES_ACTIVE=docker
-      - SPRING_DATASOURCE_URL=jdbc:mariadb://lecturedb:3306/lecture_db
+      - SPRING_DATASOURCE_URL=jdbc:mariadb://event-db:3306/event_platform_db
       - SPRING_DATASOURCE_USERNAME=manager
       - SPRING_DATASOURCE_PASSWORD=SqlDba-1
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
@@ -206,18 +206,18 @@ services:
       kafka:
         condition: service_healthy
     networks:
-      - lecture-net
+      - event-platform-net
 
   payment-service:
     build:
       context: ./payment-service
       dockerfile: Dockerfile
-    container_name: lecture-payment
+    container_name: event-platform-payment
     ports:
       - "8084:8084"
     environment:
       - SPRING_PROFILES_ACTIVE=docker
-      - SPRING_DATASOURCE_URL=jdbc:mariadb://lecturedb:3306/lecture_db
+      - SPRING_DATASOURCE_URL=jdbc:mariadb://event-db:3306/event_platform_db
       - SPRING_DATASOURCE_USERNAME=manager
       - SPRING_DATASOURCE_PASSWORD=SqlDba-1
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
@@ -234,13 +234,13 @@ services:
       kafka:
         condition: service_healthy
     networks:
-      - lecture-net
+      - event-platform-net
 
   recommend-service:
     build:
       context: ./recommend-service
       dockerfile: Dockerfile
-    container_name: lecture-recommend
+    container_name: event-platform-recommend
     ports:
       - "8085:8085"
     environment:
@@ -248,8 +248,8 @@ services:
       - EUREKA_INSTANCE_HOST=recommend-service
       - JWT_ISSUER_URI=http://localhost:8080
       - JWK_SET_URI=http://auth-server:9000/oauth2/jwks
-      - ENROLLMENT_SERVICE_URL=http://enrollment-service:8083
-      - COURSE_SERVICE_URL=http://course-service:8082
+      - RESERVATION_SERVICE_URL=http://reservation-service:8083
+      - EVENT_SERVICE_URL=http://event-service:8082
       - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
     depends_on:
       eureka-server:
@@ -258,12 +258,12 @@ services:
         condition: service_healthy
       kafka:
         condition: service_healthy
-      enrollment-service:
+      reservation-service:
         condition: service_started
-      course-service:
+      event-service:
         condition: service_started
     networks:
-      - lecture-net
+      - event-platform-net
 
 
 # Volumes & Networks
@@ -273,5 +273,5 @@ volumes:
   kafka_data:
 
 networks:
-  lecture-net:
+  event-platform-net:
     driver: bridge
