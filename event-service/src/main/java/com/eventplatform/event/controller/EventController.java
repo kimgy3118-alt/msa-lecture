@@ -19,7 +19,7 @@ public class EventController {
     private final EventService eventService;
 
     /**
-     * POST /events - 행사 등록 (기관 담당자만)
+     * POST /api/events - 행사 등록 (기관 담당자만)
      * Gateway에서 전달한 X-User-Id 헤더로 기관 담당자 ID 추출
      */
     @PostMapping

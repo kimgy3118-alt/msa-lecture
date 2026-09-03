@@ -56,8 +56,8 @@ public class SecurityConfig {
 //                 .requestMatchers(HttpMethod.GET, "/api/events", "/api/events/**").permitAll()
 //                 // 내부 서비스 호출 (Client Credentials)
 //                 .requestMatchers("/api/events/internal/**").hasAuthority("SCOPE_service.read")
-//                 // 행사 등록은 ORGANIZER만
-//                 .requestMatchers(HttpMethod.POST, "/api/events").hasAuthority("ROLE_ORGANIZER")
+//                 // 행사 등록은 ADMIN만
+//                 .requestMatchers(HttpMethod.POST, "/api/events").hasAuthority("ROLE_ADMIN")
 //                 .anyRequest().authenticated()
 //             )
 //             .oauth2ResourceServer(oauth2 -> oauth2

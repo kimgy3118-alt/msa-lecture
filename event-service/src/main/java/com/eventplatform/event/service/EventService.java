@@ -23,7 +23,7 @@ public class EventService {
     @Transactional
     public EventDto.EventResponse createEvent(EventDto.CreateRequest request, Long organizerId) {
         
-        // 날짜 검증은 정확히 여기에 넣기
+        // 날짜 검증
         if (!request.getEventStartAt().isBefore(request.getEventEndAt())) {
             throw new IllegalArgumentException(
                     "행사 종료 일시는 시작 일시보다 늦어야 합니다."

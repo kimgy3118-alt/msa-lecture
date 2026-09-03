@@ -12,9 +12,6 @@ CATEGORY_KO = {
     EventCategory.FESTIVAL: "축제",
     EventCategory.EXHIBITION: "전시",
     EventCategory.PERFORMANCE: "공연",
-    EventCategory.CULTURE_EXPERIENCE: "기타",
-    EventCategory.SPORTS: "기타",
-    EventCategory.EDUCATION: "기타",
     EventCategory.OTHER: "기타",
 }
 

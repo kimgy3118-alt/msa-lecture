@@ -17,7 +17,7 @@ public class PaymentDto {
     @AllArgsConstructor
     @Builder
     public static class PaymentRequest {
-        @NotNull(message = "강의 ID는 필수입니다")
+        @NotNull(message = "행사 ID는 필수입니다")
         private Long eventId;
 
         @NotNull(message = "금액은 필수입니다")

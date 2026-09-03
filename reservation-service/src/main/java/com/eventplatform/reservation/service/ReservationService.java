@@ -169,11 +169,10 @@ public class ReservationService {
         if (category == null) return null;
 
         return switch (category) {
-            case "BACKEND" -> "백엔드";
-            case "FRONTEND" -> "프론트엔드";
-            case "DEVOPS" -> "DevOps";
-            case "DATA" -> "데이터";
-            case "AI" -> "AI";
+            case "FESTIVAL" -> "축제";
+            case "EXHIBITION" -> "전시";
+            case "PERFORMANCE" -> "공연";
+            case "OTHER" -> "기타";
             default -> category;
         };
     }
