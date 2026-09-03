@@ -47,9 +47,6 @@
             class="feature-card"
           >
             <img class="feature-card-photo" :src="event.imageUrl" :alt="event.title" />
-            <button class="heart-btn" :class="{ liked: favoriteStore.isFavorite(event.id) }" @click.prevent="favoriteStore.toggle(event.id)" aria-label="찜하기">
-              <svg viewBox="0 0 24 24" width="16" height="16" :fill="favoriteStore.isFavorite(event.id) ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="2"><path d="M12 21s-7.5-4.6-10-9.3C.5 8 2 4.5 5.5 4c2-.3 3.8.6 6.5 3.4C14.7 4.6 16.5 3.7 18.5 4 22 4.5 23.5 8 22 11.7 19.5 16.4 12 21 12 21Z" /></svg>
-            </button>
             <div class="feature-card-overlay">
               <span class="feature-card-cat">{{ event.category }}</span>
               <h3>{{ event.title }}</h3>
@@ -78,13 +75,11 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useEventStore } from '@/store/event.js'
-import { useFavoriteStore } from '@/store/favorite.js'
 import { useAuthStore } from '@/store/auth.js'
 import { reservationApi } from '@/api/reservation.js'
 
 const router = useRouter()
 const eventStore = useEventStore()
-const favoriteStore = useFavoriteStore()
 const auth = useAuthStore()
 
 const trackRef = ref(null)

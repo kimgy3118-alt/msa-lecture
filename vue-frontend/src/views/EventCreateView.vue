@@ -171,7 +171,10 @@ const categoryOptions = [
 // 원본 파일을 그대로 base64로 저장하면 문자열이 너무 커져
 // 서비스 간 내부 통신(reservation-service → event-service)이 응답 크기 제한에 걸려 실패한다.
 // 그래서 캔버스로 리사이즈·압축한 뒤 저장한다.
-function resizeImage(file, maxSize = 1000, quality = 0.75) {
+// Gateway를 거쳐 행사 정보를 다시 받을 때도 안전하도록 대표 이미지는 약 180KB 이하로
+// 압축한다. 이 제한이 없으면 DB 저장은 성공했는데 큰 JSON 응답이 게이트웨이에서
+// 끊겨 화면에는 "등록 실패"로 보일 수 있다.
+function resizeImage(file, maxSize = 900, quality = 0.7) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader()
     reader.onerror = reject
@@ -179,13 +182,29 @@ function resizeImage(file, maxSize = 1000, quality = 0.75) {
       const img = new Image()
       img.onerror = reject
       img.onload = () => {
-        const scale = Math.min(1, maxSize / Math.max(img.width, img.height))
         const canvas = document.createElement('canvas')
-        canvas.width = Math.round(img.width * scale)
-        canvas.height = Math.round(img.height * scale)
-        const ctx = canvas.getContext('2d')
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
-        resolve(canvas.toDataURL('image/jpeg', quality))
+        let currentSize = maxSize
+        let currentQuality = quality
+        let result = ''
+
+        // 이미지 내용에 따라 같은 해상도라도 용량 차이가 크므로, 목표 용량까지
+        // 해상도와 품질을 단계적으로 낮춘다.
+        for (let attempt = 0; attempt < 6; attempt += 1) {
+          const scale = Math.min(1, currentSize / Math.max(img.width, img.height))
+          canvas.width = Math.max(1, Math.round(img.width * scale))
+          canvas.height = Math.max(1, Math.round(img.height * scale))
+          const ctx = canvas.getContext('2d')
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
+          result = canvas.toDataURL('image/jpeg', currentQuality)
+          if (result.length <= 180000) {
+            resolve(result)
+            return
+          }
+          currentSize = Math.round(currentSize * 0.72)
+          currentQuality = Math.max(0.45, currentQuality - 0.08)
+        }
+
+        reject(new Error('image-too-large'))
       }
       img.src = String(reader.result)
     }
@@ -204,7 +223,7 @@ async function handleImageChange(event) {
     photoPreview.value = resized
     form.imageUrl = resized
   } catch {
-    imageError.value = "이미지를 처리하지 못했습니다. 다른 파일로 시도해 주세요."
+    imageError.value = "사진 용량이 너무 큽니다. 다른 사진을 선택해 주세요."
   }
 }
 

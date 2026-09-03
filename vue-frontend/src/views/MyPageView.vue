@@ -19,15 +19,6 @@
           </div>
         </div>
 
-        <!-- 찜한 행사 -->
-        <section class="favorite-section">
-          <h3 class="section-title">찜한 행사</h3>
-          <div v-if="favoriteEvents.length" class="recommend-grid fade-in">
-            <EventCard v-for="c in favoriteEvents" :key="c.id" :event="c" />
-          </div>
-          <p v-else class="empty-text">아직 찜한 행사가 없습니다. 마음에 드는 행사에서 하트를 눌러보세요.</p>
-        </section>
-
         <!-- 일반 사용자 화면 -->
         <section v-if="!isOrganizer" class="recommend-section">
           <h3 class="section-title">추천 행사</h3>
@@ -153,7 +144,6 @@ import { ref, computed, onMounted } from 'vue'
 import EventCard from '@/components/EventCard.vue'
 import { useAuthStore } from '@/store/auth.js'
 import { useEventStore } from '@/store/event.js'
-import { useFavoriteStore } from '@/store/favorite.js'
 import { reservationApi } from '@/api/reservation.js'
 import { eventApi } from '@/api/event.js'
 import profileImg from '@/assets/images/profile/profile.png'
@@ -161,11 +151,9 @@ import profileOrganizerImg from '@/assets/images/profile/profile2.png'
 
 const auth = useAuthStore()
 const eventStore = useEventStore()
-const favoriteStore = useFavoriteStore()
 
 const isOrganizer = computed(() => auth.user?.role === 'ADMIN')
 const avatarSrc = computed(() => (isOrganizer.value ? profileOrganizerImg : profileImg))
-const favoriteEvents = computed(() => eventStore.events.filter(e => favoriteStore.isFavorite(e.id)))
 
 /* 일반 사용자용 */
 const recommendations = ref([])

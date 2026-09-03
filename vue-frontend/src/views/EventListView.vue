@@ -40,9 +40,6 @@
             <span v-else class="event-card-fallback">{{ categorySymbol(event.category) }}</span>
             <span class="event-card-badge">{{ event.category || "행사" }}</span>
             <span class="event-card-dday" :class="{ ended: isEnded(event.eventStartAt) }">{{ ddayLabel(event.eventStartAt) }}</span>
-            <button class="heart-btn" :class="{ liked: favoriteStore.isFavorite(event.id) }" @click.prevent="favoriteStore.toggle(event.id)" aria-label="찜하기">
-              <svg viewBox="0 0 24 24" width="15" height="15" :fill="favoriteStore.isFavorite(event.id) ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="2"><path d="M12 21s-7.5-4.6-10-9.3C.5 8 2 4.5 5.5 4c2-.3 3.8.6 6.5 3.4C14.7 4.6 16.5 3.7 18.5 4 22 4.5 23.5 8 22 11.7 19.5 16.4 12 21 12 21Z" /></svg>
-            </button>
           </div>
           <div class="event-card-body">
             <h2>{{ event.title }}</h2>
@@ -69,11 +66,9 @@ import { useRoute } from "vue-router"
 import { storeToRefs } from "pinia"
 import { useEventStore } from "@/store/event.js"
 import { useAuthStore } from "@/store/auth.js"
-import { useFavoriteStore } from "@/store/favorite.js"
 const route = useRoute()
 const eventStore = useEventStore()
 const auth = useAuthStore()
-const favoriteStore = useFavoriteStore()
 const { loading } = storeToRefs(eventStore)
 const categories = eventStore.categories
 const selectedCategory = computed(() => eventStore.selectedCategory)
