@@ -6,15 +6,10 @@ from datetime import datetime
 
 
 class EventCategory(str, Enum):
-    BACKEND = "BACKEND"
-    FRONTEND = "FRONTEND"
-    DEVOPS = "DEVOPS"
-    DATA_SCIENCE = "DATA_SCIENCE"
-    MOBILE = "MOBILE"
-    SECURITY = "SECURITY"
-    DATABASE = "DATABASE"
+    FESTIVAL = "FESTIVAL"
+    EXHIBITION = "EXHIBITION"
+    PERFORMANCE = "PERFORMANCE"
     OTHER = "OTHER"
-
 
 class EventResponse(BaseModel):
     id: int
