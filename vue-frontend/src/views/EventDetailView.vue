@@ -13,14 +13,25 @@
 
             <div class="detail-meta">
               <span>주관 기관: {{ displayInstructorName }}</span>
-              <span>예약자: {{ displayReservationCount }}명</span>
+              <span v-if="showCapacity">예약 인원: {{ displayReservationCount }}/{{ displayCapacity }}</span>
+              <span v-else>예약자: {{ displayReservationCount }}명</span>
+            </div>
+
+            <div v-if="mapEmbedUrl" class="detail-map">
+              <p class="event-place">⌖ {{ event.venue }}</p>
+              <iframe
+                :src="mapEmbedUrl"
+                title="행사 장소 지도"
+                loading="lazy"
+                referrerpolicy="no-referrer-when-downgrade"
+              ></iframe>
             </div>
           </div>
 
           <!-- 우측 결제/참여 카드 -->
           <div class="enroll-card fade-in">
             <div class="enroll-thumb" :class="thumbBg">
-              <img v-if="thumbSrc" :src="event.imageUrl || thumbSrc" :alt="event.title" />
+              <img v-if="event.imageUrl || thumbSrc" :src="event.imageUrl || thumbSrc" :alt="event.title" />
             </div>
 
             <div class="enroll-body">
@@ -44,6 +55,16 @@
               </p>
 
               <ul class="enroll-info-list"><li>✓ {{ event.eventType === 'FREE_VISIT' ? '예약 없이 자유롭게 방문' : '선착순 예약' }}</li><li>✓ 행사 시작 전까지 예약 가능</li></ul>
+
+              <div v-if="reservationStatus === 'CONFIRMED'" class="my-reservation-box">
+                <div class="my-reservation-head">
+                  <b>내 예약 정보</b>
+                  <span class="payment-status-badge" :class="{ paid: myPayment }">{{ myPayment ? '결제 완료' : '예약 확정' }}</span>
+                </div>
+                <div class="my-reservation-row"><span>행사일까지</span><strong class="dday">{{ ddayLabel }}</strong></div>
+                <div v-if="myPayment" class="my-reservation-row"><span>결제 금액</span><strong>{{ Number(myPayment.amount).toLocaleString() }}원</strong></div>
+                <div v-if="myPayment" class="my-reservation-row"><span>결제 시간</span><strong>{{ new Date(myPayment.createdAt).toLocaleString('ko-KR') }}</strong></div>
+              </div>
             </div>
           </div>
         </div>
@@ -65,6 +86,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useEventStore } from '@/store/event.js'
 import { reservationApi } from '@/api/reservation.js'
+import { paymentApi } from '@/api/payment.js'
 import { useAuthStore } from '@/store/auth.js'
 
 const route = useRoute()
@@ -75,6 +97,29 @@ const auth = useAuthStore()
 const enrolling = ref(false)
 const enrollError = ref('')
 const reservationStatus = ref('NONE') // NONE | PAYMENT_PENDING | CONFIRMED
+const myPayment = ref(null)
+
+const ddayLabel = computed(() => {
+  if (!event.value?.eventStartAt) return '일정 미정'
+  const today = new Date(); today.setHours(0, 0, 0, 0)
+  const target = new Date(event.value.eventStartAt); target.setHours(0, 0, 0, 0)
+  const diffDays = Math.round((target - today) / (1000 * 60 * 60 * 24))
+  if (diffDays === 0) return 'D-DAY'
+  if (diffDays > 0) return `D-${diffDays}`
+  return '종료된 행사'
+})
+
+async function loadMyPayment() {
+  myPayment.value = null
+  if (!auth.user?.id || event.value?.eventType !== 'PAID_RESERVATION') return
+  try {
+    const res = await paymentApi.getMyPayments(auth.user.id)
+    const list = Array.isArray(res.data?.data) ? res.data.data : Array.isArray(res.data) ? res.data : []
+    myPayment.value = list.find(p => Number(p.eventId) === Number(event.value.id) && p.status === 'COMPLETED') || null
+  } catch (e) {
+    console.error('[EventDetail] failed to load payment info:', e)
+  }
+}
 
 const event = computed(() => eventStore.selectedEvent)
 const loading = computed(() => eventStore.loading)
@@ -96,6 +141,11 @@ const displayCategory = computed(() => event.value?.category || '-')
 
 const displayInstructorName = computed(() => event.value?.organizerName || '주관 기관 정보 없음')
 
+const mapEmbedUrl = computed(() => {
+  if (!event.value?.venue) return null
+  return `https://www.google.com/maps?q=${encodeURIComponent(event.value.venue)}&output=embed`
+})
+
 const displayReservationCount = computed(() => {
   const value = Number(
     event.value?.reservationCount ??
@@ -104,6 +154,13 @@ const displayReservationCount = computed(() => {
   )
   return Number.isNaN(value) ? 0 : value.toLocaleString()
 })
+
+const displayCapacity = computed(() => {
+  const value = Number(event.value?.capacity ?? 0)
+  return Number.isNaN(value) ? 0 : value.toLocaleString()
+})
+
+const showCapacity = computed(() => event.value?.eventType !== 'FREE_VISIT' && Number(event.value?.capacity) > 0)
 
 const displayPrice = computed(() => {
   const value = Number(event.value?.price ?? 0)
@@ -179,6 +236,7 @@ async function loadReservationStatus() {
     }
 
     reservationStatus.value = matched.status
+    if (reservationStatus.value === 'CONFIRMED') await loadMyPayment()
   } catch (e) {
     console.error('[EventDetail] failed to load reservation status:', e)
     reservationStatus.value = 'NONE'
@@ -212,11 +270,25 @@ async function handlePrimaryAction() {
   try {
     await reservationApi.reserve(event.value.id)
     reservationStatus.value = event.value.eventType === 'PAID_RESERVATION' ? 'PAYMENT_PENDING' : 'CONFIRMED'
+
+    // 유료 예약은 결제 완료 → 예약 확정(CONFIRMED)까지 Kafka를 통한 비동기 처리라
+    // 확정될 때까지 잠시 상태를 다시 확인한다.
+    if (reservationStatus.value === 'PAYMENT_PENDING') {
+      await pollUntilConfirmed()
+    }
   } catch (e) {
     console.error('[EventDetail] enroll failed:', e)
     enrollError.value = e.response?.data?.message || '결제/참여 신청에 실패했습니다.'
   } finally {
     enrolling.value = false
+  }
+}
+
+async function pollUntilConfirmed(attempts = 8, delayMs = 1500) {
+  for (let i = 0; i < attempts; i++) {
+    await new Promise(resolve => setTimeout(resolve, delayMs))
+    await loadReservationStatus()
+    if (reservationStatus.value === 'CONFIRMED') return
   }
 }
 
@@ -261,7 +333,26 @@ watch(
 .detail-info {
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
   gap: 14px;
+}
+
+.detail-map {
+  width: 100%;
+  margin-top: 8px;
+}
+
+.detail-map .event-place {
+  margin: 0 0 10px;
+  font-size: 14px;
+  color: var(--color-text-secondary);
+}
+
+.detail-map iframe {
+  width: 100%;
+  height: 280px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
 }
 
 .detail-title {
@@ -302,8 +393,7 @@ watch(
 .enroll-thumb img {
   width: 100%;
   height: 100%;
-  object-fit: contain;
-  padding:28px;
+  object-fit: cover;
 }
 
 .thumb-teal { background: #E1F5EE; }
@@ -347,6 +437,59 @@ watch(
 .enroll-info-list li {
   font-size: 13px;
   color: var(--color-text-secondary);
+}
+
+.my-reservation-box {
+  margin-top: 4px;
+  padding: 16px;
+  border-radius: var(--radius-md);
+  background: var(--color-bg-secondary);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.my-reservation-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.my-reservation-box b {
+  font-size: 13px;
+  color: var(--color-text-primary);
+}
+
+.payment-status-badge {
+  padding: 4px 11px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 700;
+  background: #e8f0fb;
+  color: #174fbd;
+}
+
+.payment-status-badge.paid {
+  background: #e6f7ee;
+  color: #1a8a4f;
+}
+
+.my-reservation-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+.my-reservation-row strong {
+  color: var(--color-text-primary);
+  font-weight: 600;
+}
+
+.my-reservation-row .dday {
+  color: var(--color-primary);
+  font-weight: 700;
 }
 
 .error-msg {

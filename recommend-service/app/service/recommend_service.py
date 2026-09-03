@@ -8,6 +8,16 @@ from app.model.schemas import EventCategory, EventResponse, RecommendResponse
 
 logger = logging.getLogger(__name__)
 
+CATEGORY_KO = {
+    EventCategory.FESTIVAL: "축제",
+    EventCategory.EXHIBITION: "전시",
+    EventCategory.PERFORMANCE: "공연",
+    EventCategory.CULTURE_EXPERIENCE: "기타",
+    EventCategory.SPORTS: "기타",
+    EventCategory.EDUCATION: "기타",
+    EventCategory.OTHER: "기타",
+}
+
 
 class RecommendService:
     """
@@ -55,7 +65,7 @@ class RecommendService:
             userId=user_id,
             recommendedEvents=recommended,
             basedOnCategory=dominant_category,
-            message=f"{dominant_category.value} 카테고리 기반 추천 행사입니다"
+            message=f"{CATEGORY_KO.get(dominant_category, '기타')} 카테고리 기반 추천 행사입니다"
         )
 
     async def _find_dominant_category(

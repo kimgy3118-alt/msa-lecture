@@ -128,6 +128,8 @@ public class ReservationService {
                             .category(normalizeCategory((String) eventInfo.get("category")))
                             .price(toBigDecimal(eventInfo.get("price")))
                             .thumbnail((String) eventInfo.get("thumbnail"))
+                            .imageUrl((String) eventInfo.get("imageUrl"))
+                            .venue((String) eventInfo.get("venue"))
                             .organizerName(
                                     firstNonNull(
                                             (String) eventInfo.get("organizerName"),

@@ -19,7 +19,7 @@
 
         <template v-if="auth.isAuthenticated">
           <router-link to="/mypage" class="user-avatar" :title="auth.user?.name">
-            <img src="@/assets/images/profile/profile.png" alt="프로필 사진" />
+            <img :src="avatarSrc" alt="프로필 사진" />
           </router-link>
           <button class="text-link" @click="handleLogout">로그아웃</button>
         </template>
@@ -35,15 +35,18 @@
 import { computed } from 'vue'
 import { useAuthStore } from '@/store/auth.js'
 import { useRoute, useRouter } from 'vue-router'
+import profileImg from '@/assets/images/profile/profile.png'
+import profileOrganizerImg from '@/assets/images/profile/profile2.png'
 
 const auth = useAuthStore()
 const route = useRoute()
 const router = useRouter()
 
 const isOrganizer = computed(() => auth.user?.role === 'ADMIN')
+const avatarSrc = computed(() => (isOrganizer.value ? profileOrganizerImg : profileImg))
 
-function handleLogout() {
-  auth.logout()
+async function handleLogout() {
+  await auth.logout(false)
   router.push('/')
 }
 </script>
@@ -53,7 +56,9 @@ function handleLogout() {
   position: sticky;
   top: 0;
   z-index: 100;
-  background: #f5f5f5;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
 .header-inner {
   max-width: 1200px;
@@ -77,12 +82,13 @@ function handleLogout() {
 .nav-links {
   display: flex;
   align-items: center;
-  gap: 30px;
+  justify-content: center;
+  gap: 34px;
   flex: 1;
 }
 .nav-link {
   padding: 9px 0;
-  font-size: 15.5px;
+  font-size: 17px;
   font-weight: 700;
   color: var(--color-text-primary);
   background: transparent;
@@ -103,18 +109,33 @@ function handleLogout() {
   flex-shrink: 0;
 }
 .icon-btn {
+  position: relative;
+  overflow: hidden;
   width: 38px;
   height: 38px;
-  border-radius: 50%;
+  border-radius: 13px;
   display: grid;
   place-items: center;
   color: #fff;
-  background: var(--color-primary);
+  background: linear-gradient(135deg, #6a8dff, #0322ab);
+  box-shadow: 0 8px 16px -6px rgba(3, 34, 171, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.4);
   transition: var(--transition);
   flex-shrink: 0;
 }
+.icon-btn::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0) 55%);
+  pointer-events: none;
+}
+.icon-btn > svg {
+  position: relative;
+  z-index: 1;
+}
 .icon-btn:hover {
-  background: var(--color-primary-dark);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 20px -6px rgba(3, 34, 171, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.4);
 }
 .text-link {
   background: none;
@@ -129,17 +150,28 @@ function handleLogout() {
   color: var(--color-text-primary);
 }
 .btn-pill {
+  position: relative;
+  overflow: hidden;
   padding: 9px 20px;
   border-radius: 999px;
-  background: var(--color-primary);
+  background: linear-gradient(135deg, #6a8dff, #0322ab);
   color: #fff;
   font-size: 14px;
   font-weight: 700;
   transition: var(--transition);
   white-space: nowrap;
+  box-shadow: 0 8px 16px -6px rgba(3, 34, 171, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+.btn-pill::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0) 55%);
+  pointer-events: none;
 }
 .btn-pill:hover {
-  background: var(--color-primary-dark);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 20px -6px rgba(3, 34, 171, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.4);
 }
 .user-avatar {
   width: 36px;

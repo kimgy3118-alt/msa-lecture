@@ -9,7 +9,7 @@
       <main class="main-content">
         <!-- 프로필 카드 -->
         <div class="profile-card fade-in-up">
-          <div class="profile-avatar"><img src="@/assets/images/profile/profile.png" alt="프로필 사진" /></div>
+          <div class="profile-avatar"><img :src="avatarSrc" alt="프로필 사진" /></div>
           <div class="profile-info">
             <h2 class="profile-name">{{ auth.user?.name || '사용자' }}</h2>
             <p class="profile-email">{{ auth.user?.email || '-' }}</p>
@@ -18,6 +18,15 @@
             </span>
           </div>
         </div>
+
+        <!-- 찜한 행사 -->
+        <section class="favorite-section">
+          <h3 class="section-title">찜한 행사</h3>
+          <div v-if="favoriteEvents.length" class="recommend-grid fade-in">
+            <EventCard v-for="c in favoriteEvents" :key="c.id" :event="c" />
+          </div>
+          <p v-else class="empty-text">아직 찜한 행사가 없습니다. 마음에 드는 행사에서 하트를 눌러보세요.</p>
+        </section>
 
         <!-- 일반 사용자 화면 -->
         <section v-if="!isOrganizer" class="recommend-section">
@@ -143,12 +152,20 @@
 import { ref, computed, onMounted } from 'vue'
 import EventCard from '@/components/EventCard.vue'
 import { useAuthStore } from '@/store/auth.js'
+import { useEventStore } from '@/store/event.js'
+import { useFavoriteStore } from '@/store/favorite.js'
 import { reservationApi } from '@/api/reservation.js'
 import { eventApi } from '@/api/event.js'
+import profileImg from '@/assets/images/profile/profile.png'
+import profileOrganizerImg from '@/assets/images/profile/profile2.png'
 
 const auth = useAuthStore()
+const eventStore = useEventStore()
+const favoriteStore = useFavoriteStore()
 
 const isOrganizer = computed(() => auth.user?.role === 'ADMIN')
+const avatarSrc = computed(() => (isOrganizer.value ? profileOrganizerImg : profileImg))
+const favoriteEvents = computed(() => eventStore.events.filter(e => favoriteStore.isFavorite(e.id)))
 
 /* 일반 사용자용 */
 const recommendations = ref([])
@@ -289,6 +306,8 @@ async function loadOrganizerEvents() {
 }
 
 onMounted(async () => {
+  if (!eventStore.events.length) eventStore.fetchEvents()
+
   if (isOrganizer.value) {
     recommendLoading.value = false
     await loadOrganizerEvents()
@@ -308,7 +327,7 @@ onMounted(async () => {
 .page-shell {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 56px 24px 100px;
+  padding: 32px 24px 100px;
 }
 
 .page-heading {
@@ -368,6 +387,7 @@ onMounted(async () => {
 .profile-info {
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
   gap: 4px;
 }
 
@@ -501,14 +521,21 @@ onMounted(async () => {
 
 .instructor-event-list {
   display: grid;
-  gap: 18px;
+  gap: 22px;
 }
 
 .instructor-event-card {
   background: var(--color-bg-primary);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
-  padding: 22px;
+  padding: 24px;
+  box-shadow: var(--shadow-sm);
+  transition: var(--transition);
+}
+
+.instructor-event-card:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
 }
 
 .event-card-top {
@@ -543,8 +570,8 @@ onMounted(async () => {
 }
 
 .status-active {
-  background: #eaf8ef;
-  color: #174fbd;
+  background: #e6f7ee;
+  color: #1a8a4f;
 }
 
 .status-inactive {
@@ -561,6 +588,7 @@ onMounted(async () => {
 
 .meta-box {
   background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   padding: 14px;
 }

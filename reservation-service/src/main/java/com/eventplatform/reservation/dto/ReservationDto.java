@@ -32,6 +32,8 @@ public class ReservationDto {
         private String category;
         private BigDecimal price;
         private String thumbnail;
+        private String imageUrl;
+        private String venue;
         private String organizerName;
         private Integer reservationCount;
     }

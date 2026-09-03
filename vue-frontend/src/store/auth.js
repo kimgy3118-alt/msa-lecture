@@ -42,11 +42,20 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  function logout(redirect = true) {
+  async function logout(redirect = true) {
     accessToken.value = null
     user.value = null
     sessionStorage.removeItem('access_token')
     sessionStorage.removeItem('user')
+
+    // 인증 서버에 남아있는 로그인 세션 쿠키도 함께 종료해야
+    // 다른 계정으로 다시 로그인할 때 이전 세션이 재사용되지 않는다.
+    // (POST /logout은 CSRF 보호에 걸려 조용히 무시되므로 반드시 GET으로 호출한다)
+    try {
+      await fetch('/logout', { method: 'GET', credentials: 'include' })
+    } catch {
+      // 네트워크 오류가 있어도 로컬 로그아웃은 이미 처리됐으므로 무시한다.
+    }
 
     if (redirect) {
       window.location.href = '/login'

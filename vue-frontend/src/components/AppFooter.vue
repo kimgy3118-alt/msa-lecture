@@ -1,14 +1,7 @@
 <template>
   <footer class="app-footer">
-    <div class="footer-utility">
+    <div v-if="isOrganizer" class="footer-utility">
       <div class="footer-utility-inner">
-        <div class="utility-links">
-          <a href="#">이용 가이드</a>
-          <span class="dot">·</span>
-          <a href="#">자주 묻는 질문</a>
-          <span class="dot">·</span>
-          <a href="#">제휴·입점 문의</a>
-        </div>
         <router-link to="/events/new" class="utility-cta">행사 주최자이신가요? 행사 등록하기 →</router-link>
       </div>
     </div>
@@ -17,11 +10,6 @@
       <div class="footer-col brand-col">
         <div class="footer-logo"><img src="@/assets/images/logo/logo.png" alt="갈래" /></div>
         <p>전국의 축제·전시·공연·문화체험을<br />한곳에서 찾고 예약하세요.</p>
-        <div class="social-row">
-          <a href="#" aria-label="Instagram">IG</a>
-          <a href="#" aria-label="YouTube">YT</a>
-          <a href="#" aria-label="X">X</a>
-        </div>
       </div>
 
       <div class="footer-col">
@@ -52,14 +40,17 @@
 </template>
 
 <script setup>
+import { computed } from 'vue'
+import { useAuthStore } from '@/store/auth.js'
+
+const auth = useAuthStore()
+const isOrganizer = computed(() => auth.user?.role === 'ADMIN')
 const year = new Date().getFullYear()
 </script>
 
 <style scoped>
 .app-footer {
   background: var(--color-bg-secondary);
-  border-top: 1px solid var(--color-border);
-  margin-top: 80px;
 }
 
 .footer-utility {
@@ -69,24 +60,6 @@ const year = new Date().getFullYear()
   max-width: 1200px;
   margin: 0 auto;
   padding: 18px 24px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  flex-wrap: wrap;
-}
-.utility-links {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 13px;
-  color: var(--color-text-secondary);
-}
-.utility-links a:hover {
-  color: var(--color-primary);
-}
-.utility-links .dot {
-  color: var(--color-border-hover);
 }
 .utility-cta {
   font-size: 13px;
@@ -141,28 +114,6 @@ const year = new Date().getFullYear()
   height: 20px;
   width: auto;
 }
-.social-row {
-  display: flex;
-  gap: 8px;
-  margin-top: 4px;
-}
-.social-row a {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: var(--color-bg-tertiary);
-  color: var(--color-text-secondary);
-  display: grid;
-  place-items: center;
-  font-size: 11px;
-  font-weight: 700;
-  transition: var(--transition);
-}
-.social-row a:hover {
-  background: var(--color-primary);
-  color: #fff;
-}
-
 .footer-bottom {
   border-top: 1px solid var(--color-border);
   padding: 18px 24px;

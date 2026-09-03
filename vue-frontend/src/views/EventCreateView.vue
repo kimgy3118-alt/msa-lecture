@@ -13,7 +13,7 @@
               <div class="section-heading"><span>대표 이미지</span><small>권장 비율 16:9 · JPG, PNG, WEBP (최대 5MB)</small></div>
               <label class="photo-dropzone" :class="{ populated: photoPreview }" for="eventImage">
                 <img v-if="photoPreview" :src="photoPreview" alt="선택한 행사 대표 이미지 미리보기" />
-                <div v-else class="photo-empty"><strong>행사를 돋보이게 할 사진을 올려주세요</strong><span>클릭해서 파일 선택</span></div>
+                <div v-else class="photo-empty"><span class="photo-plus">+</span><strong>행사를 돋보이게 할 사진을 올려주세요</strong><span>클릭해서 파일 선택</span></div>
                 <span v-if="photoPreview" class="photo-change">사진 변경</span>
               </label>
               <input id="eventImage" class="sr-only" type="file" accept="image/png,image/jpeg,image/webp" @change="handleImageChange" />
@@ -27,7 +27,7 @@
                 v-model.trim="form.title"
                 type="text"
                 class="form-input"
-                placeholder="예: Cloud Native App기반 Web Service 개발"
+                placeholder="예: 홀랑이랑 스칼라투어"
                 maxlength="100"
               />
             </div>
@@ -165,18 +165,47 @@ const submitSuccess = ref('')
 
 const categoryOptions = [
   { label: '축제', value: 'FESTIVAL' }, { label: '전시', value: 'EXHIBITION' },
-  { label: '공연', value: 'PERFORMANCE' }, { label: '문화 체험', value: 'CULTURE_EXPERIENCE' },
-  { label: '스포츠', value: 'SPORTS' }, { label: '교육', value: 'EDUCATION' }, { label: '기타', value: 'OTHER' }
+  { label: '공연', value: 'PERFORMANCE' }, { label: '기타', value: 'OTHER' }
 ]
 
-function handleImageChange(event) {
+// 원본 파일을 그대로 base64로 저장하면 문자열이 너무 커져
+// 서비스 간 내부 통신(reservation-service → event-service)이 응답 크기 제한에 걸려 실패한다.
+// 그래서 캔버스로 리사이즈·압축한 뒤 저장한다.
+function resizeImage(file, maxSize = 1000, quality = 0.75) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onerror = reject
+    reader.onload = () => {
+      const img = new Image()
+      img.onerror = reject
+      img.onload = () => {
+        const scale = Math.min(1, maxSize / Math.max(img.width, img.height))
+        const canvas = document.createElement('canvas')
+        canvas.width = Math.round(img.width * scale)
+        canvas.height = Math.round(img.height * scale)
+        const ctx = canvas.getContext('2d')
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
+        resolve(canvas.toDataURL('image/jpeg', quality))
+      }
+      img.src = String(reader.result)
+    }
+    reader.readAsDataURL(file)
+  })
+}
+
+async function handleImageChange(event) {
   const file = event.target.files?.[0]
   imageError.value = ""
   if (!file) return
   if (file.size > 5 * 1024 * 1024) { imageError.value = "이미지는 5MB 이하만 등록할 수 있습니다."; return }
-  const reader = new FileReader()
-  reader.onload = () => { photoPreview.value = String(reader.result); form.imageUrl = photoPreview.value }
-  reader.readAsDataURL(file)
+
+  try {
+    const resized = await resizeImage(file)
+    photoPreview.value = resized
+    form.imageUrl = resized
+  } catch {
+    imageError.value = "이미지를 처리하지 못했습니다. 다른 파일로 시도해 주세요."
+  }
 }
 
 function removeImage() { photoPreview.value = ""; form.imageUrl = "" }
@@ -279,7 +308,7 @@ async function handleSubmit() {
 .page-shell {
   max-width: 1000px;
   margin: 0 auto;
-  padding: 56px 24px 100px;
+  padding: 32px 24px 100px;
 }
 
 .page-heading {
@@ -308,11 +337,13 @@ async function handleSubmit() {
 
 .section-heading { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; font-size:14px; font-weight:700; }
 .section-heading small { color:var(--color-text-muted); font-size:12px; font-weight:400; }
-.photo-dropzone { position:relative; display:flex; min-height:220px; overflow:hidden; align-items:center; justify-content:center; border:1px dashed #8ba4c7; border-radius:16px; cursor:pointer; background:linear-gradient(135deg,#edf5fc,#f7fafc); }
-.photo-dropzone:hover { border-color:var(--color-primary); background:#f1f7ff; }
+.photo-dropzone { position:relative; display:flex; min-height:220px; overflow:hidden; align-items:center; justify-content:center; border:1px dashed var(--color-border); border-radius:16px; cursor:pointer; background:transparent; }
+.photo-dropzone:hover { border-color:var(--color-primary); background:var(--color-bg-secondary); }
 .photo-dropzone img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
-.photo-empty { display:grid; gap:7px; text-align:center; color:#35526f; }
-.photo-empty strong { font-size:15px; }
+.photo-empty { display:grid; justify-items:center; gap:7px; text-align:center; color:var(--color-text-secondary); }
+.photo-plus { position:relative; overflow:hidden; display:grid; place-items:center; width:44px; height:44px; margin-bottom:2px; border-radius:15px; background:linear-gradient(135deg,#8ea9ff,#0322ab); color:#fff; font-size:22px; font-weight:600; line-height:1; box-shadow:0 8px 16px -6px rgba(3,34,171,.4), inset 0 1px 0 rgba(255,255,255,.4); }
+.photo-plus::after { content:""; position:absolute; inset:0; background:linear-gradient(135deg,rgba(255,255,255,.4),rgba(255,255,255,0) 55%); }
+.photo-empty strong { font-size:15px; color:var(--color-text-primary); }
 .photo-empty span { font-size:13px; color:var(--color-text-muted); }
 .photo-change { position:absolute; right:12px; bottom:12px; padding:7px 10px; border-radius:8px; background:rgba(11,31,51,.78); color:#fff; font-size:12px; }
 .photo-remove { margin-top:9px; border:0; background:none; color:#d14343; cursor:pointer; font-size:13px; padding:0; }

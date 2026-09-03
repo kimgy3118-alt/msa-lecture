@@ -6,13 +6,12 @@ from datetime import datetime
 
 
 class EventCategory(str, Enum):
-    BACKEND = "BACKEND"
-    FRONTEND = "FRONTEND"
-    DEVOPS = "DEVOPS"
-    DATA_SCIENCE = "DATA_SCIENCE"
-    MOBILE = "MOBILE"
-    SECURITY = "SECURITY"
-    DATABASE = "DATABASE"
+    FESTIVAL = "FESTIVAL"
+    EXHIBITION = "EXHIBITION"
+    PERFORMANCE = "PERFORMANCE"
+    CULTURE_EXPERIENCE = "CULTURE_EXPERIENCE"
+    SPORTS = "SPORTS"
+    EDUCATION = "EDUCATION"
     OTHER = "OTHER"
 
 
@@ -21,11 +20,19 @@ class EventResponse(BaseModel):
     title: str
     description: Optional[str] = None
     category: EventCategory
+    eventType: Optional[str] = None
+    venue: Optional[str] = None
+    organizerName: Optional[str] = None
+    imageUrl: Optional[str] = None
     price: Decimal
-    instructorId: int
+    organizerId: int
     reservationCount: int
     status: str
     createdAt: Optional[datetime] = None
+    eventStartAt: Optional[datetime] = None
+    eventEndAt: Optional[datetime] = None
+    registrationStartAt: Optional[datetime] = None
+    registrationEndAt: Optional[datetime] = None
 
 
 class ReservationHistoryResponse(BaseModel):

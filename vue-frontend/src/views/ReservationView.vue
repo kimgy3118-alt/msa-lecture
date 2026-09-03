@@ -12,33 +12,29 @@
         </div>
 
         <div v-else-if="reservations.length" class="reservation-list fade-in">
-          <div v-for="item in reservations" :key="item.id" class="reservation-card">
+          <router-link v-for="item in reservations" :key="item.id" :to="`/events/${item.eventId}`" class="reservation-card">
             <div class="enroll-thumb" :class="getThumbBg(item.event?.category)">
               <img :src="getThumbSrc(item.event)" :alt="item.event?.title" />
             </div>
 
             <div class="enroll-info">
-              <span class="badge" :class="getBadge(item.event?.category)">
-                {{ item.event?.category }}
-              </span>
+              <span class="enroll-category">{{ eventStore.normalizeCategory(item.event?.category) }}</span>
               <h3 class="enroll-title">{{ item.event?.title }}</h3>
-              <p class="enroll-instructor">주관 기관: {{ item.event?.instructorName }}</p>
+              <p class="enroll-venue">⌖ {{ item.event?.venue || '장소 추후 공지' }}</p>
             </div>
 
-            <div class="enroll-status">
+            <div class="enroll-right">
+              <b class="enroll-price">{{ priceLabel(item.event) }}</b>
               <span
                 :class="[
                   'status-badge',
-                  item.status === 'ACTIVE' ? 'status-active' : 'status-pending'
+                  item.status === 'CONFIRMED' ? 'status-active' : item.status === 'CANCELLED' ? 'status-cancelled' : 'status-pending'
                 ]"
               >
-                {{ item.status === 'ACTIVE' ? '예약 확정' : '대기 중' }}
+                {{ statusLabel(item.status) }}
               </span>
-              <router-link :to="`/events/${item.eventId}`" class="btn btn-ghost btn-sm">
-                행사 보기
-              </router-link>
             </div>
-          </div>
+          </router-link>
         </div>
 
         <div v-else class="empty-state">
@@ -60,9 +56,11 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { reservationApi } from '@/api/reservation.js'
 import { useAuthStore } from '@/store/auth.js'
+import { useEventStore } from '@/store/event.js'
 
 const router = useRouter()
 const auth = useAuthStore()
+const eventStore = useEventStore()
 
 const reservations = ref([])
 const loading = ref(true)
@@ -81,11 +79,20 @@ function getThumbBg(cat) {
   return categoryConfig[cat]?.bg || 'thumb-gray'
 }
 
-function getBadge(cat) {
-  return categoryConfig[cat]?.badge || 'badge-gray'
+function priceLabel(event) {
+  const value = Number(event?.price ?? 0)
+  return value > 0 ? `${value.toLocaleString()}원` : '무료'
+}
+
+function statusLabel(status) {
+  if (status === 'CONFIRMED') return '예약 확정'
+  if (status === 'CANCELLED') return '취소됨'
+  return '결제 처리 중'
 }
 
 function getThumbSrc(event) {
+  if (event?.imageUrl) return event.imageUrl
+
   const key = event?.thumbnail || categoryConfig[event?.category]?.thumb
   if (!key) return ''
   try {
@@ -132,7 +139,7 @@ onMounted(async () => {
 .page-shell {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 56px 24px 100px;
+  padding: 32px 24px 100px;
 }
 
 .page-heading {
@@ -168,21 +175,24 @@ onMounted(async () => {
 .reservation-card {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 20px;
   background: var(--color-bg-primary);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
-  padding: 16px;
+  padding: 18px;
   transition: var(--transition);
+  text-decoration: none;
+  color: inherit;
 }
 
 .reservation-card:hover {
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow-md);
+  border-color: var(--color-border-hover);
 }
 
 .enroll-thumb {
-  width: 72px;
-  height: 72px;
+  width: 108px;
+  height: 108px;
   border-radius: var(--radius-md);
   display: flex;
   align-items: center;
@@ -194,8 +204,48 @@ onMounted(async () => {
 .enroll-thumb img {
   width: 100%;
   height: 100%;
-  object-fit: contain;
-  padding: 8px;
+  object-fit: cover;
+}
+
+.enroll-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.enroll-category {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+  font-size: 11.5px;
+  font-weight: 700;
+}
+
+.enroll-venue {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.enroll-right {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+}
+
+.enroll-price {
+  font-size: 15px;
+  color: var(--color-text-primary);
 }
 
 .thumb-teal {
@@ -218,35 +268,22 @@ onMounted(async () => {
   background: #F1EFE8;
 }
 
-.enroll-info {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
 .enroll-title {
-  font-size: 15px;
-  font-weight: 600;
-}
-
-.enroll-instructor {
-  font-size: 13px;
-  color: var(--color-text-secondary);
-}
-
-.enroll-status {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 8px;
+  width: 100%;
+  font-size: 16.5px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .status-badge {
-  padding: 4px 12px;
+  flex-shrink: 0;
+  padding: 6px 14px;
   border-radius: 20px;
-  font-size: 12px;
-  font-weight: 500;
+  font-size: 12.5px;
+  font-weight: 600;
 }
 
 .status-active {
@@ -259,9 +296,9 @@ onMounted(async () => {
   color: #854F0B;
 }
 
-.btn-sm {
-  padding: 7px 14px;
-  font-size: 13px;
+.status-cancelled {
+  background: #f3f4f6;
+  color: #6b7280;
 }
 
 .empty-state {
