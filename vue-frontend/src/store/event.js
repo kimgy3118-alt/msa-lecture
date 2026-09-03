@@ -42,9 +42,22 @@ export const useEventStore = defineStore('event', () => {
     SEA: new URL('../assets/images/events/sea-festival.jpg', import.meta.url).href,
     HANOK: new URL('../assets/images/events/hanok.jpg', import.meta.url).href,
     JAZZ: new URL('../assets/images/events/jazz.jpg', import.meta.url).href,
-    CITRUS: new URL('../assets/images/events/citrus.jpg', import.meta.url).href,
+    CITRUS: 'https://api.cdn.visitjeju.net/photomng/imgpath/202212/07/1fadded5-dc56-449d-a209-910b787074e6.jpg',
     GYEONGJU: new URL('../assets/images/events/gyeongju.jpg', import.meta.url).href,
     ROCK: new URL('../assets/images/events/rock.jpg', import.meta.url).href,
+  }
+
+  // 초기 예시 행사와 실제 DB 행사에 공통으로 사용하는 대표 사진.
+  // 기관이 직접 사진을 등록한 경우에는 해당 imageUrl을 우선한다.
+  const eventImageById = {
+    9001: eventPhotos.FIREWORKS,
+    9002: eventPhotos.EXHIBITION,
+    9003: eventPhotos.SEA,
+    9004: eventPhotos.HANOK,
+    9005: eventPhotos.JAZZ,
+    9006: eventPhotos.CITRUS,
+    9007: eventPhotos.GYEONGJU,
+    9008: eventPhotos.ROCK,
   }
 
   // 백엔드에서 아직 행사 데이터를 받아오지 못했을 때 보여줄 예시 행사
@@ -69,7 +82,8 @@ export const useEventStore = defineStore('event', () => {
 
     return {
       ...event,
-      category: normalizeCategory(event.category)
+      category: normalizeCategory(event.category),
+      imageUrl: event.imageUrl || eventImageById[Number(event.id)] || null
     }
   }
 
@@ -80,6 +94,10 @@ export const useEventStore = defineStore('event', () => {
     }
 
     return categoryThumbnailMap[event?.category] || null
+  }
+
+  function getEventImage(event) {
+    return event?.imageUrl || eventImageById[Number(event?.id)] || null
   }
 
   async function fetchEvents() {
@@ -147,6 +165,7 @@ export const useEventStore = defineStore('event', () => {
     categoryLabelMap,
     normalizeCategory,
     normalizeEvent,
+    getEventImage,
     getThumbnail,
     fetchEvents,
     fetchEvent,

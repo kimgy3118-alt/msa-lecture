@@ -169,6 +169,27 @@ const displayPrice = computed(() => {
 const priceLabel = computed(() => event.value?.eventType === 'FREE_VISIT' || event.value?.eventType === 'FREE_RESERVATION' ? '무료' : `₩${displayPrice.value}`)
 const displayDate = computed(() => event.value?.eventStartAt ? new Date(event.value.eventStartAt).toLocaleString('ko-KR') : '일정 미정')
 
+const eventEnded = computed(() => {
+  const eventEnd = event.value?.eventEndAt ? new Date(event.value.eventEndAt) : null
+  return Boolean(eventEnd && !Number.isNaN(eventEnd.getTime()) && eventEnd <= new Date())
+})
+
+const enrollmentUnavailableReason = computed(() => {
+  if (!event.value) return null
+
+  const now = new Date()
+  const eventEnd = event.value.eventEndAt ? new Date(event.value.eventEndAt) : null
+  const registrationStart = event.value.registrationStartAt ? new Date(event.value.registrationStartAt) : null
+  const registrationEnd = event.value.registrationEndAt ? new Date(event.value.registrationEndAt) : null
+
+  if (event.value.status && event.value.status !== 'ACTIVE') return '현재 신청할 수 없는 행사입니다.'
+  if (eventEnd && !Number.isNaN(eventEnd.getTime()) && eventEnd <= now) return '이미 종료된 행사입니다.'
+  if (registrationStart && !Number.isNaN(registrationStart.getTime()) && registrationStart > now) return '아직 예약 접수 전입니다.'
+  if (registrationEnd && !Number.isNaN(registrationEnd.getTime()) && registrationEnd <= now) return '예약 접수가 마감되었습니다.'
+  if (Number(event.value.reservationCount ?? 0) >= Number(event.value.capacity ?? Infinity)) return '예약이 마감되었습니다.'
+  return null
+})
+
 const thumbSrc = computed(() => {
   const key = event.value?.thumbnail || config.value.thumb
   if (!key) return null
@@ -181,21 +202,26 @@ const thumbSrc = computed(() => {
 })
 
 const buttonLabel = computed(() => {
+  if (eventEnded.value) return '종료된 행사'
   if (isOrganizer.value) return '기관 담당자 계정은 신청 불가'
   if (event.value?.eventType === 'FREE_VISIT') return '자유 방문 행사'
   if (reservationStatus.value === 'CONFIRMED') return '내 예약 목록으로 이동'
   if (reservationStatus.value === 'PAYMENT_PENDING') return '결제 처리 중'
+  if (enrollmentUnavailableReason.value) return enrollmentUnavailableReason.value
   return event.value?.eventType === 'PAID_RESERVATION' ? '결제하고 예약하기' : '무료 예약하기'
 })
 
 const buttonDisabled = computed(() => {
   if (enrolling.value) return true
+  if (eventEnded.value) return true
   if (isOrganizer.value) return true
   if (event.value?.eventType === 'FREE_VISIT' || reservationStatus.value === 'PAYMENT_PENDING') return true
+  if (reservationStatus.value !== 'CONFIRMED' && enrollmentUnavailableReason.value) return true
   return false
 })
 
 const helperText = computed(() => {
+  if (eventEnded.value) return '행사 기간이 종료되었습니다.'
   if (isOrganizer.value) {
     return '기관 담당자 계정은 본인 행사를 참여 신청할 수 없습니다.'
   }
@@ -208,6 +234,8 @@ const helperText = computed(() => {
   if (reservationStatus.value === 'PAYMENT_PENDING') {
     return '결제가 처리되면 예약이 확정됩니다.'
   }
+
+  if (enrollmentUnavailableReason.value) return enrollmentUnavailableReason.value
 
   return event.value?.eventType === 'PAID_RESERVATION' ? '결제를 진행하면 예약이 확정됩니다.' : '예약 즉시 확정됩니다.'
 })
@@ -262,6 +290,11 @@ async function handlePrimaryAction() {
   }
 
   if (reservationStatus.value === 'PAYMENT_PENDING') {
+    return
+  }
+
+  if (enrollmentUnavailableReason.value) {
+    enrollError.value = enrollmentUnavailableReason.value
     return
   }
 

@@ -91,7 +91,8 @@ function statusLabel(status) {
 }
 
 function getThumbSrc(event) {
-  if (event?.imageUrl) return event.imageUrl
+  const eventImage = eventStore.getEventImage(event)
+  if (eventImage) return eventImage
 
   const key = event?.thumbnail || categoryConfig[event?.category]?.thumb
   if (!key) return ''

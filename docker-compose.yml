@@ -95,7 +95,7 @@ services:
       - "9000:9000"
     environment:
       - SPRING_PROFILES_ACTIVE=docker
-      - SPRING_DATASOURCE_URL=jdbc:mariadb://event-db:3306/event_platform_db
+      - SPRING_DATASOURCE_URL=jdbc:mariadb://event-db:3306/auth_platform_db
       - SPRING_DATASOURCE_USERNAME=manager
       - SPRING_DATASOURCE_PASSWORD=SqlDba-1
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/

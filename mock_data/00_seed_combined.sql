@@ -52,9 +52,8 @@ INSERT INTO users (email, password, name, role, created_at, updated_at) VALUES
   ('user43@example.com', '$2a$10$R0tq9nnQBrTXbIH.x0HGFOitkaDQBwHET/bh/RsHy4ZrOymiorZZu', '신다은', 'STANDARD', '2026-09-01 09:00:00.000000', '2026-09-01 09:00:00.000000'),
   ('user44@example.com', '$2a$10$R0tq9nnQBrTXbIH.x0HGFOitkaDQBwHET/bh/RsHy4ZrOymiorZZu', '권민서', 'STANDARD', '2026-09-01 09:00:00.000000', '2026-09-01 09:00:00.000000'),
   ('user45@example.com', '$2a$10$R0tq9nnQBrTXbIH.x0HGFOitkaDQBwHET/bh/RsHy4ZrOymiorZZu', '홍유진', 'STANDARD', '2026-09-01 09:00:00.000000', '2026-09-01 09:00:00.000000'),
-  ('owner@test.com', '$2a$10$R0tq9nnQBrTXbIH.x0HGFOitkaDQBwHET/bh/RsHy4ZrOymiorZZu', '홀랑이', 'STUDENT', '2026-09-01 09:00:00.000000', '2026-09-01 09:00:00.000000'),
-  ('instructor@lecture.com', '$2a$10$gDybnIC2AX6TFE.7ZhdTaeUG/zBgLcNMm4IQwBspJ4fYNgdTN7QNS', '김강사', 'INSTRUCTOR', '2026-09-01 09:00:00.000000', '2026-09-01 09:00:00.000000'),
-  ('owner2@test.com', '$2a$10$R0tq9nnQBrTXbIH.x0HGFOitkaDQBwHET/bh/RsHy4ZrOymiorZZu', '길동', 'INSTRUCTOR', '2026-09-01 09:00:00.000000', '2026-09-01 09:00:00.000000');
+  ('owner@test.com', '$2a$10$R0tq9nnQBrTXbIH.x0HGFOitkaDQBwHET/bh/RsHy4ZrOymiorZZu', '홀랑이', 'STANDARD', '2026-09-01 09:00:00.000000', '2026-09-01 09:00:00.000000'),
+  ('owner2@test.com', '$2a$10$R0tq9nnQBrTXbIH.x0HGFOitkaDQBwHET/bh/RsHy4ZrOymiorZZu', '홀랑홀랑이', 'ADMIN', '2026-09-01 09:00:00.000000', '2026-09-01 09:00:00.000000');
 
 INSERT INTO events
   (title, description, category, event_type, venue, organizer_name, image_url, price,

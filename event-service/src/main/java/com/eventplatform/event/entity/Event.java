@@ -126,8 +126,14 @@ public class Event {
     }
 
     public void increaseReservationCount() {
+        if (status != Status.ACTIVE) {
+            throw new IllegalStateException("현재 신청할 수 없는 행사입니다.");
+        }
         if (!eventType.requiresReservation()) {
             throw new IllegalStateException("자유 방문형 행사는 예약할 수 없습니다.");
+        }
+        if (!LocalDateTime.now().isBefore(eventEndAt)) {
+            throw new IllegalStateException("이미 종료된 행사입니다.");
         }
         RegistrationStatus status = getRegistrationStatus();
 

@@ -18,7 +18,10 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (res) => res,
   (err) => {
-    if (err.response?.status === 401) {
+    // 추천은 로그인 후 보조적으로 불러오는 데이터다. 추천 서비스의 일시적인
+    // 인증/통신 오류가 전체 로그인 세션을 지우면 안 된다.
+    const isRecommendationRequest = err.config?.url?.startsWith('/api/recommend/')
+    if (err.response?.status === 401 && !isRecommendationRequest) {
       console.error('[API] 401 Unauthorized, request url =', err.config?.url)
       const auth = useAuthStore()
       auth.logout()

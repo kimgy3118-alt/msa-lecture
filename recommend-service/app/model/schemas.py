@@ -9,6 +9,9 @@ class EventCategory(str, Enum):
     FESTIVAL = "FESTIVAL"
     EXHIBITION = "EXHIBITION"
     PERFORMANCE = "PERFORMANCE"
+    CULTURE_EXPERIENCE = "CULTURE_EXPERIENCE"
+    SPORTS = "SPORTS"
+    EDUCATION = "EDUCATION"
     OTHER = "OTHER"
 
 class EventResponse(BaseModel):
