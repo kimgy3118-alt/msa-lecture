@@ -18,7 +18,7 @@ services:
       - "3379:3306"
     volumes:
       - mariadb_data:/var/lib/mysql
-      - ./init-db:/docker-entrypoint-initdb.d
+      - ./database/init-db:/docker-entrypoint-initdb.d
     healthcheck:
       test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
       interval: 10s
@@ -62,7 +62,7 @@ services:
 
   eureka-server:
     build:
-      context: ./eureka-server
+      context: ./src/backend/eureka-server
       dockerfile: Dockerfile
     container_name: event-platform-eureka
     ports:
@@ -132,7 +132,7 @@ services:
 
   user-service:
     build:
-      context: ./user-service
+      context: ./src/backend/user-service
       dockerfile: Dockerfile
     container_name: event-platform-user
     ports:
@@ -157,7 +157,7 @@ services:
 
   event-service:
     build:
-      context: ./event-service
+      context: ./src/backend/event-service
       dockerfile: Dockerfile
     container_name: event-platform-event
     ports:
@@ -182,7 +182,7 @@ services:
 
   reservation-service:
     build:
-      context: ./reservation-service
+      context: ./src/backend/reservation-service
       dockerfile: Dockerfile
     container_name: event-platform-reservation
     ports:
@@ -210,7 +210,7 @@ services:
 
   payment-service:
     build:
-      context: ./payment-service
+      context: ./src/backend/payment-service
       dockerfile: Dockerfile
     container_name: event-platform-payment
     ports:
@@ -238,7 +238,7 @@ services:
 
   recommend-service:
     build:
-      context: ./recommend-service
+      context: ./src/backend/recommend-service
       dockerfile: Dockerfile
     container_name: event-platform-recommend
     ports:

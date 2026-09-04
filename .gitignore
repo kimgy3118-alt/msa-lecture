@@ -5,8 +5,8 @@
 
 # Frontend dependencies and local environment
 **/node_modules/
-vue-frontend/.env
-vue-frontend/dist/
+src/frontend/.env
+src/frontend/dist/
 
 # IDE / operating system files
 .DS_Store

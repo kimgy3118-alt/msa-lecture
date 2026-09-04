@@ -11,6 +11,21 @@
 - 추천: 예약 이력 기반 맞춤 행사와 신규 사용자 인기 행사를 추천합니다.
 - 인증: OAuth2 기반 로그인과 역할별 화면을 제공합니다.
 
+## 행사 유형
+
+| 유형 | 예약 | 결제 |
+| --- | --- | --- |
+| 자유 방문형 | 필요 없음 | 필요 없음 |
+| 무료 예약형 | 필요 | 필요 없음 |
+| 유료 예약형 | 필요 | 필요 |
+
+## 폴더 안내
+
+- `src/backend/` : Spring Boot 기반 마이크로서비스(eureka-server, event-service, reservation-service, payment-service, user-service)와 Python(FastAPI) 기반 recommend-service.
+- `src/frontend/` : Vue 3 프런트엔드.
+- `database/` : DB 관련 SQL 모음입니다. `init-db/`는 컨테이너 최초 기동 시 자동 실행되는 초기화 스크립트, `mock-data/`는 필요할 때 수동으로 넣는 샘플 시드 데이터입니다.
+- `docs/` : 트러블슈팅 문서(`troubleshooting.md`)와 발표자료를 모아둔 폴더입니다.
+
 ## 서비스 구성
 
 | 구성 | 포트 | 역할 |
@@ -34,7 +49,7 @@
 - 프로젝트 최상위 폴더에서 명령 실행
 
 ```bash
-cd /Users/younnii/Documents/Github/msa-lecture
+cd msa-lecture
 ```
 
 ## 실행 방법
@@ -53,12 +68,14 @@ docker compose -f docker-compose.build.yml ps
 
 `event-platform-eureka`, `event-platform-auth`, `event-db`, `event-platform-kafka` 등이 `running` 또는 `healthy`가 되면 정상입니다. 최초 실행은 이미지 빌드와 서비스 등록 때문에 몇 분 걸릴 수 있습니다.
 
+> ⚠️ **참고**: `auth-server`, `api-gateway`는 사전 빌드 이미지를 사용합니다. 새 환경에서 `pull access denied` 오류가 나면 [인증 이미지 관련 안내](#인증-이미지-관련-안내)를 참고하세요.
+
 ### 2. 프런트엔드 실행
 
 새 터미널을 열어 아래를 실행합니다.
 
 ```bash
-cd /Users/younnii/Documents/Github/msa-lecture/vue-frontend
+cd msa-lecture/src/frontend
 npm install
 npm run dev -- --host localhost
 ```
@@ -72,21 +89,10 @@ npm run dev -- --host localhost
 초기 DB에는 테이블만 생성됩니다. 목록에 예시 행사와 데모 계정을 넣으려면 백엔드가 실행된 뒤 프로젝트 최상위 폴더에서 아래 명령을 실행합니다.
 
 ```bash
-docker exec -i event-db mariadb -umanager -pSqlDba-1 event_platform_db < mock_data/00_seed_combined.sql
+docker exec -i event-db mariadb -umanager -pSqlDba-1 event_platform_db < database/mock-data/00_seed_combined.sql
 ```
 
 > 이 시드 파일은 기존 사용자·행사·예약·결제 데이터를 비운 뒤 샘플 데이터로 교체합니다. 이미 등록한 데이터가 있다면 실행하지 마세요.
-
-## 인증 이미지 관련 안내
-
-`auth-server`, `api-gateway`는 사전 빌드 이미지를 사용합니다. 새 환경에서 아래처럼 `pull access denied` 오류가 날 경우, 수업 배포본의 `infra-images.tar`를 먼저 로드해야 합니다.
-
-```bash
-docker load -i /infra-images.tar의/실제/경로/infra-images.tar
-docker compose -f docker-compose.build.yml up -d --build
-```
-
-tar 파일을 실행하는 것이 아니라 `docker load -i`로 불러와야 합니다.
 
 ## 데모 계정
 
@@ -102,7 +108,7 @@ tar 파일을 실행하는 것이 아니라 `docker load -i`로 불러와야 합
 전체 서비스 종료:
 
 ```bash
-cd /Users/younnii/Documents/Github/msa-lecture
+cd msa-lecture
 docker compose -f docker-compose.build.yml down
 ```
 
@@ -124,10 +130,13 @@ docker compose -f docker-compose.build.yml logs -f event-service
 docker compose -f docker-compose.build.yml down -v
 ```
 
-## 행사 유형
+## 인증 이미지 관련 안내
 
-| 유형 | 예약 | 결제 |
-| --- | --- | --- |
-| 자유 방문형 | 필요 없음 | 필요 없음 |
-| 무료 예약형 | 필요 | 필요 없음 |
-| 유료 예약형 | 필요 | 필요 |
+`auth-server`, `api-gateway`는 사전 빌드 이미지를 사용합니다. 새 환경에서 아래처럼 `pull access denied` 오류가 날 경우, 수업 배포본의 `infra-images.tar`를 먼저 로드해야 합니다.
+
+```bash
+docker load -i /infra-images.tar의/실제/경로/infra-images.tar
+docker compose -f docker-compose.build.yml up -d --build
+```
+
+tar 파일을 실행하는 것이 아니라 `docker load -i`로 불러와야 합니다.
